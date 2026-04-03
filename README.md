@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AquaNexa AI
 
-## Getting Started
+AquaNexa AI adalah platform "Smart Aquaculture with AIoT" generasi terbaru yang dirancang untuk merevolusi budidaya perikanan (fish farming). Platform ini menyediakan solusi pemantauan cerdas dengan memanfaatkan teknologi *Artificial Intelligence of Things* (AIoT), yang mencakup pemantauan kualitas air secara real-time, *computer vision*, dan analitik prediktif untuk mencapai hasil panen yang optimal.
 
-First, run the development server:
+## Fitur Utama
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- 🌊 **Real-Time Sensors**: Memantau kualitas air meliputi parameter pH, *Dissolved Oxygen* (DO), Suhu, dan Amonia selama 24/7.
+- 📷 **Computer Vision**: Deteksi berbasis AI untuk mengestimasi ukuran ikan, menghitung jumlah, dan menganalisis perilaku ikan di dalam kolam.
+- 📈 **Predictive Yield**: Insight berbasis data (data-driven) untuk memprediksi estimasi hasil panen serta kebutuhan pakan ternak yang efisien.
+- 💻 **Interactive Dashboard**: Panel kontrol interaktif yang memungkinkan pengguna memonitor kolam secara langsung, menganalisa prediksi AI, dan mengontrol perangkat keras (hardware) dari jarak jauh.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Teknologi yang Digunakan
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Website ini dikembangkan menggunakan teknologi web modern untuk performa dan UI/UX yang maksimal:
+- **[Next.js (App Router)](https://nextjs.org/)** - Framework React utama
+- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS untuk desain responsif dan styling
+- **[Framer Motion](https://www.framer.com/motion/)** - Animasi dinamis
+- **[Recharts](https://recharts.org/)** - Visualisasi data dan grafik interaktif untuk dashboard
+- **[Lucide React](https://lucide.dev/)** - Kumpulan ikon modern
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Cara Menjalankan Project (Local Development)
 
-## Learn More
+Pastikan Anda memiliki instalasi Node.js pada komputer Anda. Buka terminal pada folder project ini dan jalankan perintah:
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Install seluruh dependencies (jika belum):
+   ```bash
+   npm install
+   ```
+2. Jalankan server lokal:
+   ```bash
+   npm run dev
+   ```
+3. Buka [http://localhost:3000](http://localhost:3000) pada browser Anda.
