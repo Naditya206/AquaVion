@@ -1,16 +1,12 @@
-# AquaNexa AI
-
-AquaNexa AI adalah platform "Smart Aquaculture with AIoT" generasi terbaru yang dirancang untuk merevolusi budidaya perikanan (fish farming). Platform ini menyediakan solusi pemantauan cerdas dengan memanfaatkan teknologi *Artificial Intelligence of Things* (AIoT), yang mencakup pemantauan kualitas air secara real-time, *computer vision*, dan analitik prediktif untuk mencapai hasil panen yang optimal.
+## Lele Smart
+Lele Smart adalah sistem berbasis web yang digunakan untuk monitoring alat iot yang terletak di kolam, Lele Smart akan terintegrasi dengan IOT, Cloud Computing dan Big Data
 
 ## Fitur Utama
-
-- 🌊 **Real-Time Sensors**: Memantau kualitas air meliputi parameter pH, *Dissolved Oxygen* (DO), Suhu, dan Amonia selama 24/7.
-- 📷 **Computer Vision**: Deteksi berbasis AI untuk mengestimasi ukuran ikan, menghitung jumlah, dan menganalisis perilaku ikan di dalam kolam.
-- 📈 **Predictive Yield**: Insight berbasis data (data-driven) untuk memprediksi estimasi hasil panen serta kebutuhan pakan ternak yang efisien.
-- 💻 **Interactive Dashboard**: Panel kontrol interaktif yang memungkinkan pengguna memonitor kolam secara langsung, menganalisa prediksi AI, dan mengontrol perangkat keras (hardware) dari jarak jauh.
+- Dashboard - berisi chart, graph, untuk monitoring seluruh isi kolam yang terdaftar pada akun
+- Manajemen kolam (CRUD) - menambah kolam dan menambahkan alat iot agar terhubung ke identitas kolam ini di database
+- Menu pembelajaran terkait lele ( detail apa aja penindakan itu, kenapa, dan dari mana sumbernya)
 
 ## Teknologi yang Digunakan
-
 Website ini dikembangkan menggunakan teknologi web modern untuk performa dan UI/UX yang maksimal:
 - **[Next.js (App Router)](https://nextjs.org/)** - Framework React utama
 - **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS untuk desain responsif dan styling
@@ -19,7 +15,6 @@ Website ini dikembangkan menggunakan teknologi web modern untuk performa dan UI/
 - **[Lucide React](https://lucide.dev/)** - Kumpulan ikon modern
 
 ## Cara Menjalankan Project (Local Development)
-
 Pastikan Anda memiliki instalasi Node.js pada komputer Anda. Buka terminal pada folder project ini dan jalankan perintah:
 
 1. Install seluruh dependencies (jika belum):
@@ -31,3 +26,9 @@ Pastikan Anda memiliki instalasi Node.js pada komputer Anda. Buka terminal pada 
    npm run dev
    ```
 3. Buka [http://localhost:3000](http://localhost:3000) pada browser Anda.
+
+## Cara Build Project
+- disarankan manggunakan pipeline CI/CD agar bisa langsung implementasi CC nya
+- gunakan branch jika ingin update, dan sering sering buka github !
+- setiap perubahan harus ada izin dari user lain untuk di merge ke main/master branch
+- kita sama sama belajar, jadi perbanyak komunikasi di grup, jangan takut salah !!!!!
