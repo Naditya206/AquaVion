@@ -5,6 +5,7 @@ Lele Smart adalah sistem berbasis web yang digunakan untuk monitoring alat iot y
 - Dashboard - berisi chart, graph, untuk monitoring seluruh isi kolam yang terdaftar pada akun
 - Manajemen kolam (CRUD) - menambah kolam dan menambahkan alat iot agar terhubung ke identitas kolam ini di database
 - Menu pembelajaran terkait lele ( detail apa aja penindakan itu, kenapa, dan dari mana sumbernya)
+- Data Realtime series dikirim kan ke platform big data (masih gajelas)
 
 ## Teknologi yang Digunakan
 Website ini dikembangkan menggunakan teknologi web modern untuk performa dan UI/UX yang maksimal:
