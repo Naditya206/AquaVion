@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata: Metadata = {
   title: "AquaNexa AI | Smart Aquaculture",
   description: "AIoT based smart aquaculture platform for monitoring and predictive analytics.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
