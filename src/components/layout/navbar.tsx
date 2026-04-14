@@ -13,7 +13,8 @@ export function Navbar() {
   const links = [
     { href: "/", label: "Home" },
     { href: "/features", label: "Features" },
-    { href: "/dashboard", label: "Dashboard" },
+    { href: "/dashboard", label: "Dashboard Monitoring" },
+    { href: "/dashboard/kolam", label: "Manajemen Kolam" },
     { href: "/about", label: "About" },
   ]
 
