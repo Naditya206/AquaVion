@@ -8,8 +8,8 @@ import { Footer } from "@/components/layout/footer";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "AquaNexa AI | Smart Aquaculture",
-  description: "AIoT based smart aquaculture platform for monitoring and predictive analytics.",
+  title: "AquaVion | Akuakultur Pintar",
+  description: "Platform akuakultur pintar berbasis AIoT untuk pemantauan dan analisis prediktif.",
   icons: {
     icon: "/icon.svg",
   },

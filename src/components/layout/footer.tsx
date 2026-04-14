@@ -7,15 +7,15 @@ export function Footer() {
       <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
         <div className="flex items-center gap-2">
           <Droplets className="h-6 w-6 text-primary" />
-          <span className="font-semibold">AquaNexa AI &copy; {new Date().getFullYear()}</span>
+          <span className="font-semibold">AquaVion &copy; {new Date().getFullYear()}</span>
         </div>
         <p className="text-sm text-muted-foreground">
-          Smart Aquaculture with AIoT Technology.
+          Akuakultur Pintar Terintegrasi dengan Teknologi AIoT.
         </p>
         <div className="flex gap-4 text-sm text-muted-foreground">
-          <Link href="/about" className="hover:text-foreground">About</Link>
-          <Link href="/features" className="hover:text-foreground">Features</Link>
-          <Link href="/dashboard" className="hover:text-foreground">Dashboard</Link>
+          <Link href="/about" className="hover:text-foreground">Tentang</Link>
+          <Link href="/features" className="hover:text-foreground">Fitur</Link>
+          <Link href="/dashboard" className="hover:text-foreground">Dasbor</Link>
         </div>
       </div>
     </footer>

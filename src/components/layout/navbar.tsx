@@ -11,11 +11,11 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
 
   const links = [
-    { href: "/", label: "Home" },
-    { href: "/features", label: "Features" },
-    { href: "/dashboard", label: "Dashboard Monitoring" },
+    { href: "/", label: "Beranda" },
+    { href: "/features", label: "Fitur" },
+    { href: "/dashboard", label: "Dasbor Pemantauan" },
     { href: "/dashboard/kolam", label: "Manajemen Kolam" },
-    { href: "/about", label: "About" },
+    { href: "/about", label: "Tentang" },
   ]
 
   return (
@@ -23,7 +23,7 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Droplets className="h-8 w-8 text-primary" />
-          <span className="font-bold text-xl tracking-tight">AquaNexa AI</span>
+          <span className="font-bold text-xl tracking-tight">AquaVion</span>
         </Link>
 
         {/* Desktop Nav */}
@@ -39,7 +39,7 @@ export function Navbar() {
           ))}
           <ThemeToggle />
           <Link href="/dashboard" className={cn(buttonVariants({ variant: "default" }))}>
-            Get Started
+            Mulai Sekarang
           </Link>
         </div>
 
@@ -74,7 +74,7 @@ export function Navbar() {
               className={cn(buttonVariants({ variant: "default" }), "w-full justify-center")}
               onClick={() => setIsOpen(false)}
             >
-              Get Started
+              Mulai Sekarang
             </Link>
           </div>
         </div>
