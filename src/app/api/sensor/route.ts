@@ -111,8 +111,65 @@ export async function POST(req: Request) {
     });
 
     if (actions.length > 0) {
-      // TODO: Panggil webhook telegram dan push notification
       console.log(`Peringatan Kolam ${pondId}:`, actions);
+      try {
+        const { doc, getDoc } = await import("firebase/firestore");
+        const settingsRef = doc(db, "users", uid, "settings", "config");
+        const settingsSnap = await getDoc(settingsRef);
+
+        let pondName = `Kolam ${pondId}`;
+        const pondRef = doc(db, "users", uid, "ponds", pondId);
+        const pondSnap = await getDoc(pondRef);
+        if (pondSnap.exists() && pondSnap.data().name) {
+          pondName = pondSnap.data().name;
+        }
+
+        if (settingsSnap.exists()) {
+          const config = settingsSnap.data();
+          if (config.telegramEnabled && config.botToken && config.chatId) {
+            const message = `🚨 *PERINGATAN AQUAVION*\nTarget: *${pondName}*\n\nKondisi terdeteksi:\n` + actions.map(a => `• ${a}`).join("\n");
+            
+            await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id: config.chatId,
+                text: message,
+                parse_mode: "Markdown"
+              })
+            });
+            console.log("Notifikasi Telegram berhasil dikirim.");
+          }
+
+          if (config.webPushEnabled) {
+             const subRef = doc(db, "users", uid, "settings", "push_subs");
+             const subSnap = await getDoc(subRef);
+             if (subSnap.exists() && subSnap.data().subscription) {
+                try {
+                  const webpush = require("web-push");
+                  webpush.setVapidDetails(
+                    "mailto:admin@aquavion.com",
+                    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string,
+                    process.env.VAPID_PRIVATE_KEY as string
+                  );
+                  await webpush.sendNotification(
+                    subSnap.data().subscription,
+                    JSON.stringify({
+                      title: `AQUAVION BAHAYA: ${pondName}`,
+                      body: actions.map(a => `• ${a}`).join("\n"),
+                      icon: "/icon.svg"
+                    })
+                  );
+                  console.log("Web Push Browser berhasil dikirim.");
+                } catch (wpErr: any) {
+                  console.error("Gagal menembak Web Push API (Pastikan VAPID diset dan library terinstall):", wpErr.message);
+                }
+             }
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengirim notifikasi:", err);
+      }
     }
 
     return Response.json({ status: "success", message: "Data received", actions });
