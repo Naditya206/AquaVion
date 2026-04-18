@@ -75,6 +75,7 @@ export default function RegisterPage() {
         {
           name: name.trim() || firebaseUser.displayName || "",
           email: firebaseUser.email ?? email,
+          role: "user",
           createdAt: serverTimestamp(),
         },
         { merge: true }

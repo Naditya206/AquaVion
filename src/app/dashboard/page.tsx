@@ -38,7 +38,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl flex-1">
+    <div className="flex flex-1 flex-col gap-4 w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Dasbor Pemantauan Kolam</h1>
@@ -86,61 +86,84 @@ export default function DashboardPage() {
 
       {/* Sensor Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className={`border-l-4 ${latestSensor?.temperature && (latestSensor.temperature < 25 || latestSensor.temperature > 30) ? 'border-l-red-500 bg-red-500/5' : 'border-l-blue-500'}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Suhu (Temperature)</CardTitle>
-            <Thermometer className="h-4 w-4 text-blue-500" />
+            <CardTitle className="text-sm font-medium">Suhu Air</CardTitle>
+            <Thermometer className={`h-4 w-4 ${latestSensor?.temperature && (latestSensor.temperature < 25 || latestSensor.temperature > 30) ? 'text-red-500' : 'text-blue-500'}`} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {latestSensor?.temperature != null ? `${latestSensor.temperature}°C` : "--"}
             </div>
-            <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <CheckCircle className="h-3 w-3 text-green-500 mr-1" /> Normal
+            <p className="text-xs flex items-center mt-1">
+              {latestSensor?.temperature == null ? null : latestSensor.temperature < 25 ? (
+                <><AlertTriangle className="h-3 w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Dingin</span></>
+              ) : latestSensor.temperature > 30 ? (
+                <><AlertTriangle className="h-3 w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Panas</span></>
+              ) : (
+                <><CheckCircle className="h-3 w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">Suhu Optimal</span></>
+              )}
             </p>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-cyan-500">
+        
+        <Card className={`border-l-4 ${latestSensor?.ph && (latestSensor.ph < 6.5 || latestSensor.ph > 8.5) ? 'border-l-red-500 bg-red-500/5' : 'border-l-cyan-500'}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tingkat pH</CardTitle>
-            <Activity className="h-4 w-4 text-cyan-500" />
+            <CardTitle className="text-sm font-medium">Keasaman Air (pH)</CardTitle>
+            <Activity className={`h-4 w-4 ${latestSensor?.ph && (latestSensor.ph < 6.5 || latestSensor.ph > 8.5) ? 'text-red-500' : 'text-cyan-500'}`} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {latestSensor?.ph != null ? latestSensor.ph : "--"}
             </div>
-            <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <CheckCircle className="h-3 w-3 text-green-500 mr-1" /> Optimal (Lele: 6.5-8.0)
+            <p className="text-xs flex items-center mt-1">
+              {latestSensor?.ph == null ? null : latestSensor.ph < 6.5 ? (
+                <><AlertTriangle className="h-3 w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Air Terlalu Asam</span></>
+              ) : latestSensor.ph > 8.5 ? (
+                <><AlertTriangle className="h-3 w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Air Terlalu Basa</span></>
+              ) : (
+                <><CheckCircle className="h-3 w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">pH Normal</span></>
+              )}
             </p>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-indigo-500">
+
+        <Card className={`border-l-4 ${latestSensor?.turbidity && latestSensor.turbidity > 400 ? 'border-l-red-500 bg-red-500/5' : 'border-l-indigo-500'}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Kekeruhan (Turbidity)</CardTitle>
-            <Wind className="h-4 w-4 text-indigo-500" />
+            <CardTitle className="text-sm font-medium">Kekeruhan Air</CardTitle>
+            <Wind className={`h-4 w-4 ${latestSensor?.turbidity && latestSensor.turbidity > 400 ? 'text-red-500' : 'text-indigo-500'}`} />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {latestSensor?.turbidity != null ? `${latestSensor.turbidity}` : "--"}
+              {latestSensor?.turbidity != null ? `${latestSensor.turbidity} NTU` : "--"}
             </div>
-            <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <CheckCircle className="h-3 w-3 text-green-500" />
-              <span className="ml-1">Pantau tingkat kekeruhan</span>
+            <p className="text-xs flex items-center mt-1">
+               {latestSensor?.turbidity == null ? null : latestSensor.turbidity > 400 ? (
+                <><AlertTriangle className="h-3 w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Air Kotor/Keruh</span></>
+              ) : (
+                <><CheckCircle className="h-3 w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">Air Cukup Bersih</span></>
+              )}
             </p>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-amber-500">
+
+        <Card className={`border-l-4 ${latestSensor?.waterLevel && (latestSensor.waterLevel < 40 || latestSensor.waterLevel > 70) ? 'border-l-red-500 bg-red-500/5' : 'border-l-amber-500'}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ketinggian Air</CardTitle>
-            <Droplets className="h-4 w-4 text-amber-500" />
+            <CardTitle className="text-sm font-medium">Tinggi Air</CardTitle>
+            <Droplets className={`h-4 w-4 ${latestSensor?.waterLevel && (latestSensor.waterLevel < 40 || latestSensor.waterLevel > 70) ? 'text-red-500' : 'text-amber-500'}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-500">
-              {latestSensor?.waterLevel != null ? `${latestSensor.waterLevel} ml` : "--"}
+            <div className="text-2xl font-bold">
+              {latestSensor?.waterLevel != null ? `${latestSensor.waterLevel} cm` : "--"}
             </div>
-            <p className="mt-1 flex items-center text-xs text-amber-500">
-              <AlertTriangle className="h-3 w-3" />
-              <span className="ml-1">Cek tinggi air secara berkala</span>
+            <p className="text-xs flex items-center mt-1">
+              {latestSensor?.waterLevel == null ? null : latestSensor.waterLevel < 40 ? (
+                <><AlertTriangle className="h-3 w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Air Terlalu Dangkal</span></>
+              ) : latestSensor.waterLevel > 70 ? (
+                <><AlertTriangle className="h-3 w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Air Terlalu Dalam</span></>
+              ) : (
+                <><CheckCircle className="h-3 w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">Volume Aman</span></>
+              )}
             </p>
           </CardContent>
         </Card>
@@ -151,8 +174,8 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Tren Kualitas Air (24j)</CardTitle>
-              <CardDescription>Data historis untuk Suhu, pH, dan DO</CardDescription>
+              <CardTitle>Tren Kualitas Air (24 Jam)</CardTitle>
+              <CardDescription>Visualisasi riwayat sensor untuk mencegah masalah lebih dini</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-75 min-h-75 w-full min-w-0">
@@ -165,115 +188,61 @@ export default function DashboardPage() {
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                       itemStyle={{ color: 'hsl(var(--foreground))' }}
                     />
-                    <Line type="monotone" dataKey="temp" name="Suhu (°C)" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="temp" name="Suhu Air (°C)" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                     <Line type="monotone" dataKey="ph" name="pH" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line type="monotone" dataKey="turbidity" name="Turbidity" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line type="monotone" dataKey="waterLevel" name="Tinggi Air (ml)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="turbidity" name="Kekeruhan" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="waterLevel" name="Tinggi Air (cm)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
               {sensorsLoading ? (
-                <p className="mt-3 text-xs text-muted-foreground">Memuat data sensor...</p>
+                <p className="mt-3 text-xs text-muted-foreground">Memuat data sensor secara live...</p>
               ) : null}
               {sensorsError ? (
                 <p className="mt-3 text-xs text-destructive">{sensorsError}</p>
               ) : null}
             </CardContent>
           </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Analisis Visi Komputer AI</CardTitle>
-              <CardDescription>Hasil pindaian terbaru dari kamera bawah air</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-muted min-h-32 rounded-lg flex flex-col items-center justify-center p-4 text-center">
-                  <span className="text-3xl font-bold text-primary">12,450</span>
-                  <span className="text-sm text-muted-foreground">Perkiraan Jumlah Ikan</span>
-                </div>
-                <div className="bg-muted min-h-32 rounded-lg flex flex-col items-center justify-center p-4 text-center">
-                  <span className="text-3xl font-bold text-primary">125g</span>
-                  <span className="text-sm text-muted-foreground">Rata-rata Berat / Ikan</span>
-                </div>
-                <div className="bg-muted min-h-32 rounded-lg flex flex-col items-center justify-center p-4 text-center">
-                  <span className="text-3xl font-bold text-primary">Normal</span>
-                  <span className="text-sm text-muted-foreground">Perilaku Makan</span>
-                </div>
-                <div className="bg-muted min-h-32 rounded-lg flex flex-col items-center justify-center p-4 text-center">
-                  <span className="text-3xl font-bold text-primary">45 Hari</span>
-                  <span className="text-sm text-muted-foreground">Perk. Waktu Panen</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Notifications and Logs */}
+        {/* Action Recomendation Panel */}
         <div className="space-y-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notifikasi Sistem</CardTitle>
-              <CardDescription>Peringatan terbaru dan tindakan yang diambil</CardDescription>
+          <Card className={latestSensor?.actions && latestSensor.actions.length > 0 ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]" : "border-green-500"}>
+            <CardHeader className={latestSensor?.actions && latestSensor.actions.length > 0 ? "bg-red-500/10 rounded-t-xl" : "bg-green-500/10 rounded-t-xl"}>
+              <CardTitle className="flex items-center gap-2">
+                {latestSensor?.actions && latestSensor.actions.length > 0 ? (
+                  <><AlertTriangle className="h-5 w-5 text-red-500" /> <span className="text-red-500">Butuh Tindakan</span></>
+                ) : (
+                  <><CheckCircle className="h-5 w-5 text-green-500" /> <span className="text-green-500">Status Aman</span></>
+                )}
+              </CardTitle>
+              <CardDescription>Rekomendasi dari sistem pakar AI kami</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4 pb-4 border-b">
-                  <div className="p-2 bg-amber-500/10 rounded-full text-amber-500">
-                    <AlertTriangle className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold">Kadar amonia naik</h4>
-                    <p className="text-xs text-muted-foreground">08:15 AM - Tingkat terdeteksi pada 0.03 mg/L.</p>
-                  </div>
+            <CardContent className="pt-6">
+              {latestSensor?.actions && latestSensor.actions.length > 0 ? (
+                <div className="space-y-4">
+                  {latestSensor.actions.map((action, i) => {
+                    const [problem, solution] = action.split("→");
+                    return (
+                      <div key={i} className="flex flex-col gap-1 pb-4 border-b last:border-0 last:pb-0">
+                        <span className="font-semibold text-sm text-red-500 flex items-center gap-1.5"><Activity className="h-3.5 w-3.5" />{problem?.trim()}</span>
+                        <span className="text-sm font-medium text-foreground bg-muted p-2 rounded-md border">{solution?.trim()}</span>
+                      </div>
+                    )
+                  })}
                 </div>
-                <div className="flex items-start gap-4 pb-4 border-b">
-                  <div className="p-2 bg-blue-500/10 rounded-full text-blue-500">
-                    <Activity className="h-4 w-4" />
+              ) : (
+                <div className="flex flex-col items-center justify-center p-6 text-center space-y-3">
+                  <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <CheckCircle className="h-6 w-6 text-green-500" />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold">Pompa air diaktifkan</h4>
-                    <p className="text-xs text-muted-foreground">08:16 AM - Sistem otomatis memicu pertukaran air untuk menurunkan amonia.</p>
-                  </div>
+                  <p className="text-sm text-muted-foreground">Kualitas air terpantau optimal. Tidak ada masalah pada kolam ini, lele dapat tumbuh dengan baik.</p>
                 </div>
-                <div className="flex items-start gap-4 pb-4 border-b">
-                  <div className="p-2 bg-green-500/10 rounded-full text-green-500">
-                    <CheckCircle className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold">Pemberian Pakan Pagi Selesai</h4>
-                    <p className="text-xs text-muted-foreground">07:00 AM - Menyebarkan 5kg pakan.</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-cyan-500/10 rounded-full text-cyan-500">
-                    <Activity className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-semibold">Pemindaian Kamera AI</h4>
-                    <p className="text-xs text-muted-foreground">06:00 AM - Tingkat pertumbuhan +2% dibandingkan minggu lalu.</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
           
-          <Card className="bg-primary text-primary-foreground">
-            <CardHeader>
-              <CardTitle className="text-primary-foreground">Tindakan Cepat</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <button className="w-full bg-background/20 hover:bg-background/30 transition-colors rounded-md p-2 text-sm font-medium text-left flex justify-between items-center">
-                Pemberian Pakan Manual <span className="text-xl">→</span>
-              </button>
-              <button className="w-full bg-background/20 hover:bg-background/30 transition-colors rounded-md p-2 text-sm font-medium text-left flex justify-between items-center">
-                Nyalakan Aerator <span className="text-xl">→</span>
-              </button>
-              <button className="w-full bg-background/20 hover:bg-background/30 transition-colors rounded-md p-2 text-sm font-medium text-left flex justify-between items-center">
-                Mulai Pemindaian AI <span className="text-xl">→</span>
-              </button>
-            </CardContent>
-          </Card>
+
         </div>
       </div>
     </div>
