@@ -33,6 +33,19 @@ type ChartPoint = {
   waterLevel?: number
 }
 
+type PondsState = {
+  ownerId: string
+  items: Pond[]
+  error: string | null
+}
+
+type SensorsState = {
+  ownerId: string
+  pondId: string
+  items: SensorRecord[]
+  error: string | null
+}
+
 const formatTime = (value?: string) => {
   if (!value) return ""
   const date = new Date(value)
@@ -65,15 +78,20 @@ export function useDashboardData() {
   const router = useRouter()
   const { user, loading } = useAuth()
 
-  const [ponds, setPonds] = useState<Pond[]>([])
-  const [pondsLoading, setPondsLoading] = useState(true)
-  const [pondsError, setPondsError] = useState<string | null>(null)
+  const [pondsState, setPondsState] = useState<PondsState | null>(null)
+  const [selectedPondId, setSelectedPondId] = useState(() => {
+    if (typeof window === "undefined") return ""
 
-  const [selectedPondId, setSelectedPondId] = useState("")
+    const params = new URLSearchParams(window.location.search)
+    const pondIdFromUrl = params.get("pondId") ?? params.get("kolam") ?? ""
+    const pondIdFromStorage =
+      window.localStorage.getItem(SELECTED_POND_STORAGE_KEY) ??
+      window.sessionStorage.getItem(SELECTED_POND_STORAGE_KEY) ??
+      ""
 
-  const [sensors, setSensors] = useState<SensorRecord[]>([])
-  const [sensorsLoading, setSensorsLoading] = useState(false)
-  const [sensorsError, setSensorsError] = useState<string | null>(null)
+    return pondIdFromUrl || pondIdFromStorage
+  })
+  const [sensorsState, setSensorsState] = useState<SensorsState | null>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -86,17 +104,6 @@ export function useDashboardData() {
 
     const params = new URLSearchParams(window.location.search)
     const pondIdFromUrl = params.get("pondId") ?? params.get("kolam") ?? ""
-    const pondIdFromStorage =
-      window.localStorage.getItem(SELECTED_POND_STORAGE_KEY) ??
-      window.sessionStorage.getItem(SELECTED_POND_STORAGE_KEY) ??
-      ""
-
-    const initialPondId = pondIdFromUrl || pondIdFromStorage
-    if (initialPondId) {
-      setSelectedPondId(initialPondId)
-      window.localStorage.setItem(SELECTED_POND_STORAGE_KEY, initialPondId)
-      window.sessionStorage.setItem(SELECTED_POND_STORAGE_KEY, initialPondId)
-    }
 
     if (pondIdFromUrl && window.location.pathname === "/dashboard") {
       router.replace("/dashboard")
@@ -104,21 +111,16 @@ export function useDashboardData() {
   }, [router])
 
   useEffect(() => {
-    if (!user) {
-      setPonds([])
-      setPondsLoading(false)
-      setPondsError(null)
-      return
-    }
+    if (!user) return
 
-    setPondsLoading(true)
+    const ownerId = user.uid
     const pondsRef = collection(db, "users", user.uid, "ponds")
     const unsubscribe = onSnapshot(
       pondsRef,
       (snapshot) => {
         const pondItems = snapshot.docs
           .map((docSnap) => {
-          const data = docSnap.data()
+            const data = docSnap.data()
             const createdAt = parseFirestoreDate(data.createdAt) ?? parseFirestoreDate(data.created_at)
 
             return {
@@ -131,45 +133,35 @@ export function useDashboardData() {
           })
           .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
 
-        setPonds(pondItems)
-        setPondsLoading(false)
-        setPondsError(null)
+        setPondsState({ ownerId, items: pondItems, error: null })
       },
       (err) => {
-        setPondsError(err.message ?? "Gagal memuat data kolam.")
-        setPondsLoading(false)
+        setPondsState({ ownerId, items: [], error: err.message ?? "Gagal memuat data kolam." })
       }
     )
 
     return () => unsubscribe()
   }, [user])
 
-  useEffect(() => {
-    if (selectedPondId || pondsLoading) return
-    if (!ponds.length) return
-
-    const fallbackId = ponds[0]?.id
-    if (!fallbackId) return
-
-    setSelectedPondId(fallbackId)
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(SELECTED_POND_STORAGE_KEY, fallbackId)
-      window.sessionStorage.setItem(SELECTED_POND_STORAGE_KEY, fallbackId)
-    }
-  }, [ponds, pondsLoading, selectedPondId])
+  const ponds = user && pondsState?.ownerId === user.uid ? pondsState.items : []
+  const pondsLoading = Boolean(user && pondsState?.ownerId !== user.uid)
+  const pondsError = user && pondsState?.ownerId === user.uid ? pondsState.error : null
+  const activePondId = selectedPondId || ponds[0]?.id || ""
 
   useEffect(() => {
-    if (!user || !selectedPondId) {
-      setSensors([])
-      setSensorsLoading(false)
-      setSensorsError(null)
-      return
-    }
+    if (typeof window === "undefined") return
+    if (!activePondId) return
 
-    setSensorsLoading(true)
-    setSensorsError(null)
+    window.localStorage.setItem(SELECTED_POND_STORAGE_KEY, activePondId)
+    window.sessionStorage.setItem(SELECTED_POND_STORAGE_KEY, activePondId)
+  }, [activePondId])
 
-    const sensorsRef = collection(db, "users", user.uid, "ponds", selectedPondId, "sensors")
+  useEffect(() => {
+    if (!user || !activePondId) return
+
+    const ownerId = user.uid
+    const pondId = activePondId
+    const sensorsRef = collection(db, "users", user.uid, "ponds", pondId, "sensors")
     const unsubscribe = onSnapshot(
       sensorsRef,
       (snapshot) => {
@@ -190,20 +182,33 @@ export function useDashboardData() {
           .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
           .slice(0, 24)
 
-        setSensors(items)
-        setSensorsLoading(false)
-        setSensorsError(null)
+        setSensorsState({ ownerId, pondId, items, error: null })
       },
       (err) => {
         const message = err.message ?? "Gagal memuat data sensor."
-        setSensorsError(message)
-        setSensors([])
-        setSensorsLoading(false)
+        setSensorsState({ ownerId, pondId, items: [], error: message })
       }
     )
 
     return () => unsubscribe()
-  }, [selectedPondId, user])
+  }, [activePondId, user])
+
+  const sensors = useMemo(
+    () =>
+      user && activePondId && sensorsState?.ownerId === user.uid && sensorsState?.pondId === activePondId
+        ? sensorsState.items
+        : [],
+    [activePondId, sensorsState, user]
+  )
+  const sensorsLoading = Boolean(
+    user &&
+      activePondId &&
+      (sensorsState?.ownerId !== user.uid || sensorsState?.pondId !== activePondId)
+  )
+  const sensorsError =
+    user && activePondId && sensorsState?.ownerId === user.uid && sensorsState?.pondId === activePondId
+      ? sensorsState.error
+      : null
 
   const latestSensor = sensors[0]
 
@@ -236,7 +241,7 @@ export function useDashboardData() {
     ponds,
     pondsLoading,
     pondsError,
-    selectedPondId,
+    selectedPondId: activePondId,
     handlePondChange,
     sensors,
     sensorsLoading,
