@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, setDoc } from "firebase/firestore"
+import { collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore"
 import { db } from "@/lib/db/firebase"
 import { useAuth } from "@/components/auth/auth-provider"
 
@@ -21,6 +21,27 @@ type FormData = {
 }
 
 const EMPTY_FORM: FormData = { name: "", location: "", device_id: "" }
+
+const parseFirestoreDate = (value: unknown): string | undefined => {
+  if (!value) return undefined
+
+  if (typeof value === "string") {
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+
+  if (typeof value === "object" && value !== null && "toDate" in value) {
+    const maybeTimestamp = value as { toDate?: () => Date }
+    const date = maybeTimestamp.toDate?.()
+    return date ? date.toISOString() : undefined
+  }
+
+  return undefined
+}
 
 export function usePonds() {
   const router = useRouter()
@@ -48,22 +69,24 @@ export function usePonds() {
 
     setIsLoading(true)
     const pondsRef = collection(db, "users", user.uid, "ponds")
-    const pondsQuery = query(pondsRef, orderBy("createdAt", "desc"))
     const unsubscribe = onSnapshot(
-      pondsQuery,
+      pondsRef,
       (snapshot) => {
-        const ponds = snapshot.docs.map((docSnap) => {
-          const data = docSnap.data()
-          const createdAt = data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : undefined
+        const ponds = snapshot.docs
+          .map((docSnap) => {
+            const data = docSnap.data()
+            const createdAt = parseFirestoreDate(data.createdAt) ?? parseFirestoreDate(data.created_at)
 
-          return {
-            id: docSnap.id,
-            name: data.name ?? "",
-            location: data.location ?? "",
-            device_id: data.device_id ?? "",
-            created_at: createdAt,
-          }
-        })
+            return {
+              id: docSnap.id,
+              name: data.name ?? "",
+              location: data.location ?? "",
+              device_id: data.device_id ?? "",
+              created_at: createdAt,
+            }
+          })
+          .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
+
         setKolamList(ponds)
         setIsLoading(false)
         setError(null)

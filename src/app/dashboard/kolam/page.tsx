@@ -3,10 +3,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Edit2, Trash2, Check, X, Eye } from "lucide-react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { usePonds } from "@/app/dashboard/kolam/use-ponds"
 
 export default function KolamManagementPage() {
+  const router = useRouter()
   const {
     user,
     loading,
@@ -24,6 +25,14 @@ export default function KolamManagementPage() {
     handleSave,
     handleDelete,
   } = usePonds()
+
+  const openMonitoring = (pondId: string) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("selectedPondId", pondId)
+      window.sessionStorage.setItem("selectedPondId", pondId)
+    }
+    router.push("/dashboard")
+  }
 
   if (loading || !user) {
     return (
@@ -152,11 +161,9 @@ export default function KolamManagementPage() {
                   </div>
                 </div>
                 <div className="mt-6 pt-0">
-                  <Link href={`/dashboard?kolam=${k.id}`} className="w-full">
-                    <Button variant="secondary" className="w-full gap-2">
-                      <Eye className="h-4 w-4" /> Buka Monitoring
-                    </Button>
-                  </Link>
+                  <Button variant="secondary" className="w-full gap-2" onClick={() => openMonitoring(k.id)}>
+                    <Eye className="h-4 w-4" /> Buka Monitoring
+                  </Button>
                 </div>
               </CardContent>
             </Card>
