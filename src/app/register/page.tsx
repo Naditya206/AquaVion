@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
+import { useRouter } from "next/navigation"
+import { createUserWithEmailAndPassword, signOut, updateProfile } from "firebase/auth"
 import { doc, serverTimestamp, setDoc } from "firebase/firestore"
 import { auth, db } from "@/lib/db/firebase"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,22 +13,19 @@ import { useAuth } from "@/components/auth/auth-provider"
 
 export default function RegisterPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { user, loading } = useAuth()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<{ title: string; message: string } | null>(null)
-
-  const rawNext = searchParams.get("next")
-  const redirectTo = rawNext?.startsWith("/") ? rawNext : "/dashboard"
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace(redirectTo)
+      router.replace("/dashboard")
     }
-  }, [loading, redirectTo, router, user])
+  }, [loading, router, user])
 
   const getErrorCopy = (err: unknown) => {
     const code = typeof err === "object" && err !== null && "code" in err
@@ -62,6 +59,7 @@ export default function RegisterPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
+    setSuccessMessage(null)
     setSubmitting(true)
 
     try {
@@ -82,7 +80,11 @@ export default function RegisterPage() {
         { merge: true }
       )
 
-      router.replace(redirectTo)
+      await signOut(auth)
+      setSuccessMessage("Akun berhasil dibuat. Silakan masuk dengan akun Anda.")
+      window.setTimeout(() => {
+        router.replace("/login?registered=1")
+      }, 900)
     } catch (err) {
       setError(getErrorCopy(err))
     } finally {
@@ -141,12 +143,18 @@ export default function RegisterPage() {
                 <p className="text-destructive/90">{error.message}</p>
               </div>
             )}
+            {successMessage && (
+              <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+                <p className="font-semibold">Berhasil</p>
+                <p>{successMessage}</p>
+              </div>
+            )}
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || Boolean(successMessage)}
               className={cn(buttonVariants({ variant: "default" }), "w-full")}
             >
-              {submitting ? "Memproses..." : "Daftar"}
+              {successMessage ? "Mengalihkan..." : submitting ? "Memproses..." : "Daftar"}
             </button>
           </form>
           <p className="mt-4 text-sm text-muted-foreground">

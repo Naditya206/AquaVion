@@ -18,15 +18,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<{ title: string; message: string } | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const rawNext = searchParams.get("next")
   const redirectTo = rawNext?.startsWith("/") ? rawNext : "/dashboard"
+  const registered = searchParams.get("registered")
 
   useEffect(() => {
     if (!loading && user) {
       router.replace(redirectTo)
     }
   }, [loading, redirectTo, router, user])
+
+  useEffect(() => {
+    if (registered === "1") {
+      setSuccessMessage("Akun berhasil dibuat. Silakan masuk untuk melanjutkan.")
+    }
+  }, [registered])
 
   const getErrorCopy = (err: unknown) => {
     const code = typeof err === "object" && err !== null && "code" in err
@@ -111,6 +119,12 @@ export default function LoginPage() {
               <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 <p className="font-semibold">{error.title}</p>
                 <p className="text-destructive/90">{error.message}</p>
+              </div>
+            )}
+            {successMessage && (
+              <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+                <p className="font-semibold">Berhasil</p>
+                <p>{successMessage}</p>
               </div>
             )}
             <button
