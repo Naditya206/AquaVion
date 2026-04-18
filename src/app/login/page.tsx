@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { signInWithEmailAndPassword } from "firebase/auth"
@@ -10,7 +10,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth/auth-provider"
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading } = useAuth()
@@ -83,64 +83,72 @@ export default function LoginPage() {
   }
 
   return (
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Masuk</CardTitle>
+        <CardDescription>Gunakan email dan kata sandi terdaftar.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium">Email</label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="nama@email.com"
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium">Kata Sandi</label>
+            <input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Minimal 6 karakter"
+            />
+          </div>
+          {error && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <p className="font-semibold">{error.title}</p>
+              <p className="text-destructive/90">{error.message}</p>
+            </div>
+          )}
+          {successMessage && (
+            <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+              <p className="font-semibold">Berhasil</p>
+              <p>{successMessage}</p>
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={submitting}
+            className={cn(buttonVariants({ variant: "default" }), "w-full")}
+          >
+            {submitting ? "Memproses..." : "Masuk"}
+          </button>
+        </form>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Belum punya akun?{" "}
+          <Link href="/register" className="text-primary hover:underline">Daftar sekarang</Link>
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function LoginPage() {
+  return (
     <div className="flex flex-1 items-center justify-center px-4 py-16">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Masuk</CardTitle>
-          <CardDescription>Gunakan email dan kata sandi terdaftar.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">Email</label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                placeholder="nama@email.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">Kata Sandi</label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                placeholder="Minimal 6 karakter"
-              />
-            </div>
-            {error && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                <p className="font-semibold">{error.title}</p>
-                <p className="text-destructive/90">{error.message}</p>
-              </div>
-            )}
-            {successMessage && (
-              <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
-                <p className="font-semibold">Berhasil</p>
-                <p>{successMessage}</p>
-              </div>
-            )}
-            <button
-              type="submit"
-              disabled={submitting}
-              className={cn(buttonVariants({ variant: "default" }), "w-full")}
-            >
-              {submitting ? "Memproses..." : "Masuk"}
-            </button>
-          </form>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Belum punya akun?{" "}
-            <Link href="/register" className="text-primary hover:underline">Daftar sekarang</Link>
-          </p>
-        </CardContent>
-      </Card>
+      <Suspense fallback={<div className="text-muted-foreground animate-pulse text-sm">Menyiapkan form masuk...</div>}>
+        <LoginForm />
+      </Suspense>
     </div>
   )
 }
