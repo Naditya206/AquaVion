@@ -6,9 +6,11 @@ import { useState } from "react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/components/auth/auth-provider"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const { user, loading, logout } = useAuth()
 
   const links = [
     { href: "/", label: "Beranda" },
@@ -38,9 +40,29 @@ export function Navbar() {
             </Link>
           ))}
           <ThemeToggle />
-          <Link href="/dashboard" className={cn(buttonVariants({ variant: "default" }))}>
-            Mulai Sekarang
-          </Link>
+          {!loading && !user && (
+            <div className="flex items-center gap-2">
+              <Link href="/login" className={cn(buttonVariants({ variant: "outline" }))}>
+                Masuk
+              </Link>
+              <Link href="/register" className={cn(buttonVariants({ variant: "default" }))}>
+                Daftar
+              </Link>
+            </div>
+          )}
+          {!loading && user && (
+            <button
+              onClick={logout}
+              className={cn(buttonVariants({ variant: "destructive" }))}
+            >
+              Keluar
+            </button>
+          )}
+          {loading && (
+            <div className={cn(buttonVariants({ variant: "default" }), "pointer-events-none opacity-70")}>
+              Memuat...
+            </div>
+          )}
         </div>
 
         {/* Mobile Nav Toggle */}
@@ -69,13 +91,40 @@ export function Navbar() {
             </Link>
           ))}
           <div className="pt-2">
-            <Link 
-              href="/dashboard" 
-              className={cn(buttonVariants({ variant: "default" }), "w-full justify-center")}
-              onClick={() => setIsOpen(false)}
-            >
-              Mulai Sekarang
-            </Link>
+            {!loading && !user && (
+              <div className="grid gap-2">
+                <Link 
+                  href="/login" 
+                  className={cn(buttonVariants({ variant: "outline" }), "w-full justify-center")}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Masuk
+                </Link>
+                <Link 
+                  href="/register" 
+                  className={cn(buttonVariants({ variant: "default" }), "w-full justify-center")}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Daftar
+                </Link>
+              </div>
+            )}
+            {!loading && user && (
+              <button
+                onClick={async () => {
+                  await logout()
+                  setIsOpen(false)
+                }}
+                className={cn(buttonVariants({ variant: "destructive" }), "w-full justify-center")}
+              >
+                Keluar
+              </button>
+            )}
+            {loading && (
+              <div className={cn(buttonVariants({ variant: "default" }), "w-full justify-center pointer-events-none opacity-70")}>
+                Memuat...
+              </div>
+            )}
           </div>
         </div>
       )}
