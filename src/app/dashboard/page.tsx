@@ -1,8 +1,11 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, AlertTriangle, CheckCircle, Droplets, Thermometer, Wind } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useAuth } from "@/components/auth/auth-provider"
 
 const data = [
   { time: '00:00', ph: 7.2, temp: 26.5, do: 6.8, ammonia: 0.02 },
@@ -15,6 +18,23 @@ const data = [
 ]
 
 export default function DashboardPage() {
+  const router = useRouter()
+  const { user, loading } = useAuth()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login?next=/dashboard")
+    }
+  }, [loading, router, user])
+
+  if (loading || !user) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-4 py-16 text-muted-foreground">
+        Memuat dasbor...
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl flex-1">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">

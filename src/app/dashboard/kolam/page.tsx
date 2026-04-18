@@ -1,80 +1,36 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Edit2, Trash2, Check, X, Eye } from "lucide-react"
 import Link from "next/link"
-
-type Kolam = {
-  id: string
-  name: string
-  location: string
-  device_id: string
-  created_at: string
-}
+import { usePonds } from "@/app/dashboard/kolam/use-ponds"
 
 export default function KolamManagementPage() {
-  const [kolamList, setKolamList] = useState<Kolam[]>([])
-  const [isAdding, setIsAdding] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  
-  const [formData, setFormData] = useState({ name: "", location: "", device_id: "" })
+  const {
+    user,
+    loading,
+    kolamList,
+    isAdding,
+    editingId,
+    isSaving,
+    isLoading,
+    error,
+    formData,
+    setFormData,
+    setIsAdding,
+    resetForm,
+    handleEdit,
+    handleSave,
+    handleDelete,
+  } = usePonds()
 
-  useEffect(() => {
-    // Load from local storage on mount
-    const saved = localStorage.getItem("aquanexa_kolam_list")
-    if (saved) {
-      setKolamList(JSON.parse(saved))
-    } else {
-      // initial mock
-      const mockList = [
-        { id: "1", name: "Kolam A (Lele Utama)", location: "Blok Utara", device_id: "AQN-IoT-001", created_at: new Date().toISOString() }
-      ]
-      setKolamList(mockList)
-      localStorage.setItem("aquanexa_kolam_list", JSON.stringify(mockList))
-    }
-  }, [])
-
-  const handleSave = () => {
-    if (!formData.name.trim()) return
-
-    let updatedList;
-    if (editingId) {
-      updatedList = kolamList.map(k => k.id === editingId ? { ...k, ...formData } : k)
-    } else {
-      const newKolam: Kolam = {
-        id: Date.now().toString(),
-        name: formData.name,
-        location: formData.location,
-        device_id: formData.device_id,
-        created_at: new Date().toISOString()
-      }
-      updatedList = [...kolamList, newKolam]
-    }
-
-    setKolamList(updatedList)
-    localStorage.setItem("aquanexa_kolam_list", JSON.stringify(updatedList))
-    resetForm()
-  }
-
-  const handleDelete = (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus kolam ini?")) return;
-    const updatedList = kolamList.filter(k => k.id !== id)
-    setKolamList(updatedList)
-    localStorage.setItem("aquanexa_kolam_list", JSON.stringify(updatedList))
-  }
-
-  const handleEdit = (k: Kolam) => {
-    setEditingId(k.id)
-    setFormData({ name: k.name, location: k.location, device_id: k.device_id })
-    setIsAdding(true)
-  }
-
-  const resetForm = () => {
-    setFormData({ name: "", location: "", device_id: "" })
-    setIsAdding(false)
-    setEditingId(null)
+  if (loading || !user) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-4 py-16 text-muted-foreground">
+        Memuat data...
+      </div>
+    )
   }
 
   return (
@@ -85,11 +41,17 @@ export default function KolamManagementPage() {
           <p className="text-muted-foreground">Kelola daftar kolam dan perangkat IoT yang terhubung.</p>
         </div>
         {!isAdding && (
-          <Button onClick={() => setIsAdding(true)}>
+          <Button onClick={() => setIsAdding(true)} disabled={isLoading}>
             <Plus className="mr-2 h-4 w-4" /> Tambah Kolam
           </Button>
         )}
       </div>
+
+      {error && (
+        <div className="mb-6 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       {isAdding && (
         <Card className="mb-8 border-primary">
@@ -131,8 +93,8 @@ export default function KolamManagementPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleSave}>
-                <Check className="mr-2 h-4 w-4" /> Simpan
+              <Button onClick={handleSave} disabled={isSaving}>
+                <Check className="mr-2 h-4 w-4" /> {isSaving ? "Menyimpan..." : "Simpan"}
               </Button>
               <Button variant="outline" onClick={resetForm}>
                 <X className="mr-2 h-4 w-4" /> Batal
@@ -142,7 +104,11 @@ export default function KolamManagementPage() {
         </Card>
       )}
 
-      {kolamList.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center p-12 border rounded-lg bg-muted/20">
+          <p className="text-muted-foreground">Memuat daftar kolam...</p>
+        </div>
+      ) : kolamList.length === 0 ? (
         <div className="text-center p-12 border rounded-lg bg-muted/20">
           <p className="text-muted-foreground">Belum ada kolam yang ditambahkan.</p>
         </div>
