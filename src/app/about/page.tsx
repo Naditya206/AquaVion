@@ -26,32 +26,32 @@ export default function AboutPage() {
           <Card>
             <CardContent className="p-6 flex flex-col items-center text-center">
               <Cpu className="h-10 w-10 text-primary mb-4" />
-              <h3 className="font-bold mb-2">Komputasi Edge</h3>
-              <p className="text-sm text-muted-foreground">Pemrosesan lokal untuk kendali otomatis langsung pada aerator tanpa penundaan (latency).</p>
+              <h3 className="font-bold mb-2">Node IoT Sensor</h3>
+              <p className="text-sm text-muted-foreground">Perangkat mikrokontroler di kolam yang secara presisi mengukur suhu, kualitas dan volume air.</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 flex flex-col items-center text-center">
               <Cloud className="h-10 w-10 text-primary mb-4" />
-              <h3 className="font-bold mb-2">Analitik Cloud</h3>
-              <p className="text-sm text-muted-foreground">Model AI berat untuk visi komputer dan analitik prediktif dijalankan di awan (cloud).</p>
+              <h3 className="font-bold mb-2">Cloud Terpusat</h3>
+              <p className="text-sm text-muted-foreground">Infrastruktur serverless mengumpulkan dan memproses ribuan data sensor dari berbagai kolam setiap harinya.</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 flex flex-col items-center text-center">
               <Database className="h-10 w-10 text-primary mb-4" />
-              <h3 className="font-bold mb-2">Penyimpanan Big Data</h3>
-              <p className="text-sm text-muted-foreground">Pelacakan data historis untuk melatih model prediksi pertumbuhan agar semakin akurat.</p>
+              <h3 className="font-bold mb-2">Penyimpanan Histori</h3>
+              <p className="text-sm text-muted-foreground">Seluruh data direkam dalam pangkalan data yang aman untuk membentuk tren analitik jangka panjang.</p>
             </CardContent>
           </Card>
         </div>
 
-        <h2 className="text-2xl font-bold mt-10 mb-4 border-b pb-2">Manfaat bagi Peternak</h2>
+        <h2 className="text-2xl font-bold mt-10 mb-4 border-b pb-2">Manfaat bagi Peternak Lele</h2>
         <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-          <li><strong className="text-foreground">Peningkatan Keuntungan:</strong> Pemberian pakan cerdas mengurangi biaya operasional tertinggi (pakan) dengan mencegah pemberian daya berlebih.</li>
-          <li><strong className="text-foreground">Mitigasi Risiko:</strong> Peringatan waktu nyata mencegah kerugian total akibat lonjakan amonia mendadak atau penipisan oksigen.</li>
-          <li><strong className="text-foreground">Pasokan yang Dapat Diprediksi:</strong> Perkiraan panen yang akurat memungkinkan negosiasi harga pasar yang lebih baik.</li>
-          <li><strong className="text-foreground">Efisiensi Tenaga Kerja:</strong> Otomatisasi tugas rutin seperti pengujian kualitas air dan kendali dasar kolam secara remote.</li>
+          <li><strong className="text-foreground">Mitigasi Risiko:</strong> Peringatan dini waktu nyata (real-time) melalui Telegram mencegah kerugian akibat kualitas air yang memburuk mendadak.</li>
+          <li><strong className="text-foreground">Kesehatan Ikan Optimal:</strong> Dengan memastikan kadar derajat keasaman (pH) dan Suhu tetap pada ambang ideal, lele bisa terhindar dari stres dan penyakit.</li>
+          <li><strong className="text-foreground">Efisiensi Tenaga Kerja:</strong> Menggantikan proses manual berupa pengecekan suhu atau memantau kolam secara keliling setiap hari.</li>
+          <li><strong className="text-foreground">Manajemen Jarak Jauh:</strong> Memantau banyak kolam secara simultan tanpa harus berada di lokasi fisik tambak.</li>
         </ul>
       </div>
     </div>

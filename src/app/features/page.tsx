@@ -4,33 +4,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export default function FeaturesPage() {
   const features = [
     {
-      title: "Pemantauan Air Waktu Nyata",
-      description: "Pelacakan DO (Oksigen Terlarut), tingkat pH, suhu, dan amonia secara otomatis dan berkelanjutan.",
+      title: "Pemantauan Kualitas Air Real-time",
+      description: "Pelacakan secara otomatis dan berkelanjutan untuk metrik penting: pH, Suhu, Kekeruhan Air (Turbidity), dan Tinggi Air.",
       icon: <Droplets className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "Visi Komputer AI",
-      description: "Kamera bawah air yang ditenagai oleh AI mendeteksi ukuran ikan, memperkirakan jumlah total, dan memantau kesehatan/perilaku ikan.",
+      title: "Manajemen Multi-Kolam",
+      description: "Daftarkan dan kelola puluhan kolam ikan dari berbagai lokasi dalam satu dashboard sentral secara mudah.",
       icon: <Cpu className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "Sistem Pakan Pintar",
-      description: "Pemberi pakan otomatis yang menyebarkan makanan berdasarkan nafsu makan ikan dan prediksi biomassa untuk mengurangi limbah.",
+      title: "Sistem Pakar Otomatis",
+      description: "Analisis cerdas yang mengonversi data sensor mentah menjadi instruksi penanganan (seperti 'Suhu Dingin → Tutup Kolam').",
       icon: <Settings className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "Analitik Prediktif",
-      description: "Model pembelajaran mesin memprediksi perkiraan tanggal panen, potensi wabah penyakit, dan tingkat pertumbuhan.",
+      title: "Riwayat & Tren Analitik",
+      description: "Rekapitulasi otomatis dalam bentuk tabel dan grafik historik. Unduh dalam bentuk CSV untuk keperluan laporan tambak.",
       icon: <LineChart className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "Kendali Otomatis",
-      description: "Integrasi IoT secara otomatis memicu aerator atau pompa air jika kondisi berada di bawah ambang batas aman.",
+      title: "Ambang Batas Kustom",
+      description: "Tentukan sendiri nilai minimal dan maksimal parameter sensor (Suhu, pH, Tinggi Air) spesifik untuk setiap kolam.",
       icon: <Wifi className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "Notifikasi Seluler",
-      description: "Terima pemberitahuan instan ke perangkat Anda untuk kondisi kritis dan laporan ringkasan harian.",
+      title: "Notifikasi Telegram",
+      description: "Terima peringatan seketika melalui bot Telegram saat mendeteksi adanya kejanggalan kualitas air yang berbahaya.",
       icon: <Smartphone className="h-10 w-10 text-cyan-500" />
     }
   ]
