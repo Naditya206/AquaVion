@@ -4,33 +4,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 export default function FeaturesPage() {
   const features = [
     {
-      title: "Real-time Water Monitoring",
-      description: "Continuous tracking of DO (Dissolved Oxygen), pH levels, temperature, and ammonia automatically.",
+      title: "Pemantauan Air Waktu Nyata",
+      description: "Pelacakan DO (Oksigen Terlarut), tingkat pH, suhu, dan amonia secara otomatis dan berkelanjutan.",
       icon: <Droplets className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "AI Computer Vision",
-      description: "Underwater cameras powered by AI detect fish size, estimate total count, and monitor fish health/behavior.",
+      title: "Visi Komputer AI",
+      description: "Kamera bawah air yang ditenagai oleh AI mendeteksi ukuran ikan, memperkirakan jumlah total, dan memantau kesehatan/perilaku ikan.",
       icon: <Cpu className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "Smart Feeding System",
-      description: "Automated feeders that disperse food based on fish appetite and biomass predictions to reduce waste.",
+      title: "Sistem Pakan Pintar",
+      description: "Pemberi pakan otomatis yang menyebarkan makanan berdasarkan nafsu makan ikan dan prediksi biomassa untuk mengurangi limbah.",
       icon: <Settings className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "Predictive Analytics",
-      description: "Machine learning models predict harvest dates, potential disease outbreaks, and overall growth rates.",
+      title: "Analitik Prediktif",
+      description: "Model pembelajaran mesin memprediksi perkiraan tanggal panen, potensi wabah penyakit, dan tingkat pertumbuhan.",
       icon: <LineChart className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "Automatic Control",
-      description: "IoT integration automatically triggers aerators or water pumps if conditions fall below safe thresholds.",
+      title: "Kendali Otomatis",
+      description: "Integrasi IoT secara otomatis memicu aerator atau pompa air jika kondisi berada di bawah ambang batas aman.",
       icon: <Wifi className="h-10 w-10 text-cyan-500" />
     },
     {
-      title: "Mobile Alerts",
-      description: "Receive instant notifications to your devices for critical conditions and daily summary reports.",
+      title: "Notifikasi Seluler",
+      description: "Terima pemberitahuan instan ke perangkat Anda untuk kondisi kritis dan laporan ringkasan harian.",
       icon: <Smartphone className="h-10 w-10 text-cyan-500" />
     }
   ]
@@ -38,9 +38,9 @@ export default function FeaturesPage() {
   return (
     <div className="container mx-auto px-4 py-20 max-w-6xl flex-1 flex flex-col justify-center">
       <div className="text-center mb-16">
-        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">Platform Features</h1>
+        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">Fitur Platform</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Everything you need to run a modern, efficient, and profitable aquaculture farm.
+          Semua yang Anda butuhkan untuk menjalankan peternakan akuakultur yang modern, efisien, dan menguntungkan.
         </p>
       </div>
 

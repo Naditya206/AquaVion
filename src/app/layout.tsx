@@ -4,12 +4,16 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { AuthProvider } from "@/components/auth/auth-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "AquaNexa AI | Smart Aquaculture",
-  description: "AIoT based smart aquaculture platform for monitoring and predictive analytics.",
+  title: "AquaVion | Akuakultur Pintar",
+  description: "Platform akuakultur pintar berbasis AIoT untuk pemantauan dan analisis prediktif.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -26,11 +30,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
-          <main className="flex-1 flex flex-col">
-            {children}
-          </main>
-          <Footer />
+          <AuthProvider>
+            <Navbar />
+            <main className="flex-1 flex flex-col">
+              {children}
+            </main>
+            <Footer />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
