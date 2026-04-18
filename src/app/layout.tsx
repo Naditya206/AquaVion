@@ -9,10 +9,32 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "AquaVion | Akuakultur Pintar",
-  description: "Platform akuakultur pintar berbasis AIoT untuk pemantauan dan analisis prediktif.",
+  title: "AquaVion | Monitoring Kolam Lele IoT",
+  description: "Platform cerdas pemantauan kualitas air kolam lele (Suhu, pH, Turbidity, Tinggi Air) dengan analitik dan notifikasi real-time.",
   icons: {
     icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
+  openGraph: {
+    title: "AquaVion | Monitoring Kolam Lele IoT",
+    description: "Platform cerdas pemantauan kualitas air kolam lele (Suhu, pH, Turbidity, Tinggi Air) dengan analitik dan notifikasi real-time.",
+    siteName: "AquaVion",
+    images: [
+      {
+        url: "/icon.svg",
+        width: 800,
+        height: 600,
+        alt: "Logo AquaVion",
+      },
+    ],
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AquaVion | Monitoring Kolam Lele IoT",
+    description: "Platform cerdas pemantauan kualitas air kolam lele (Suhu, pH, Turbidity, Tinggi Air) dengan analitik dan notifikasi real-time.",
+    images: ["/icon.svg"],
   },
 };
 
