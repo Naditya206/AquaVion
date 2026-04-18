@@ -120,8 +120,71 @@ export default function SettingsPage() {
     }
   }
 
-  const handleTestTelegram = () => {
-    setMessage({ type: "success", text: "Pesan percobaan Telegram telah dikirim! (Simulasi)" });
+  const [isSimulating, setIsSimulating] = useState(false)
+  
+  const handleTestTelegram = async () => {
+    if (!user) return;
+    setIsSimulating(true);
+    setMessage({ type: "", text: "Memulai pengiriman simulasi ke 3 kolam..." });
+    try {
+      const res = await fetch(`/api/simulate?uid=${user.uid}`);
+      const data = await res.json();
+      if (res.ok) {
+        setMessage({ type: "success", text: `Pengiriman berhasil! IoT dummy telah mengirim data ke ${data.banyak_kolam} kolam Anda. Cek Telegram Anda jika ada peringatan bahaya!` });
+      } else {
+        setMessage({ type: "error", text: data.error || "Gagal memulai simulasi" });
+      }
+    } catch (error) {
+       setMessage({ type: "error", text: "Terjadi masalah saat mengakses API simulasi" });
+    } finally {
+       setIsSimulating(false);
+    }
+  }
+
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  const handlePushToggle = async (checked: boolean) => {
+    setGlobalSettings({...globalSettings, webPushEnabled: checked});
+    if (checked && 'serviceWorker' in navigator && 'PushManager' in window && user) {
+      try {
+        const swReg = await navigator.serviceWorker.register('/sw.js');
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+           const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+           if (!vapidPublicKey) {
+              setMessage({ type: "error", text: "VAPID Public Key belum disetel di .env.local" });
+              return;
+           }
+           setMessage({ type: "", text: "Mendaftarkan perangkat Anda ke Web Push..." });
+           const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+           const subscription = await swReg.pushManager.subscribe({
+             userVisibleOnly: true,
+             applicationServerKey: convertedVapidKey
+           });
+           await fetch('/api/web-push/save', {
+             method: 'POST',
+             headers: {'Content-Type':'application/json'},
+             body: JSON.stringify({ uid: user.uid, subscription })
+           });
+           setMessage({ type: "success", text: "Perangkat ini sukses berlangganan Push Notification!" });
+        } else {
+           setMessage({ type: "error", text: "Izin notifikasi diblokir oleh browser Anda." });
+           setGlobalSettings({...globalSettings, webPushEnabled: false});
+        }
+      } catch (err) {
+        console.error("Gagal mendaftar push", err);
+        setMessage({ type: "error", text: "Gagal menghubungkan Service Worker Push Browser." });
+      }
+    }
   }
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Memuat pengaturan...</div>
@@ -232,7 +295,7 @@ export default function SettingsPage() {
                   <p className="text-sm text-muted-foreground">Terima notifikasi di browser walau halaman ditutup.</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" checked={globalSettings.webPushEnabled} onChange={e => setGlobalSettings({...globalSettings, webPushEnabled: e.target.checked})} />
+                  <input type="checkbox" className="sr-only peer" checked={globalSettings.webPushEnabled} onChange={e => handlePushToggle(e.target.checked)} />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                 </label>
               </div>
@@ -273,8 +336,12 @@ export default function SettingsPage() {
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus:ring-2 focus:ring-sky-500"
                     />
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={handleTestTelegram} className="mt-2 text-sky-600 border-sky-200 hover:bg-sky-100 dark:text-sky-400 dark:border-sky-800 dark:hover:bg-sky-900">
-                    <Send className="h-3 w-3 mr-2" /> Kirim Notifikasi Test
+                  <Button type="button" variant="outline" size="sm" onClick={handleTestTelegram} disabled={isSimulating} className="mt-2 text-sky-600 border-sky-200 hover:bg-sky-100 dark:text-sky-400 dark:border-sky-800 dark:hover:bg-sky-900">
+                    {isSimulating ? (
+                      <>Menyiapkan Simulasi Iot...</>
+                    ) : (
+                      <><Send className="h-3 w-3 mr-2" /> Jalankan Simulasi 3 Kolam</>
+                    )}
                   </Button>
                 </div>
               )}
