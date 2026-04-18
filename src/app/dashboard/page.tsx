@@ -1,31 +1,33 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, AlertTriangle, CheckCircle, Droplets, Thermometer, Wind } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { useAuth } from "@/components/auth/auth-provider"
-
-const data = [
-  { time: '00:00', ph: 7.2, temp: 26.5, do: 6.8, ammonia: 0.02 },
-  { time: '04:00', ph: 7.1, temp: 26.2, do: 6.5, ammonia: 0.03 },
-  { time: '08:00', ph: 7.3, temp: 27.1, do: 7.0, ammonia: 0.02 },
-  { time: '12:00', ph: 7.5, temp: 28.5, do: 7.2, ammonia: 0.01 },
-  { time: '16:00', ph: 7.4, temp: 28.0, do: 7.1, ammonia: 0.02 },
-  { time: '20:00', ph: 7.2, temp: 27.2, do: 6.7, ammonia: 0.03 },
-  { time: '24:00', ph: 7.2, temp: 26.8, do: 6.6, ammonia: 0.02 },
-]
+import { useDashboardData } from "./use-dashboard-data"
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const { user, loading } = useAuth()
+  const {
+    user,
+    loading,
+    ponds,
+    pondsLoading,
+    pondsError,
+    selectedPondId,
+    handlePondChange,
+    sensorsLoading,
+    sensorsError,
+    latestSensor,
+    chartData,
+  } = useDashboardData()
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login?next=/dashboard")
-    }
-  }, [loading, router, user])
+  const headerSubtitle = useMemo(() => {
+    const selectedPond = ponds.find((pond) => pond.id === selectedPondId)
+    if (!selectedPond) return "Telemetri waktu nyata dan analitik AI."
+    const details = [selectedPond.name, selectedPond.location].filter(Boolean).join(" - ")
+    return `Telemetri waktu nyata dan analitik AI (${details}).`
+  }, [ponds, selectedPondId])
 
   if (loading || !user) {
     return (
@@ -38,9 +40,40 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl flex-1">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
+        <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Dasbor Pemantauan Kolam</h1>
-          <p className="text-muted-foreground">Telemetri waktu nyata dan analitik AI (Kolam A - Lele).</p>
+          <p className="text-muted-foreground">{headerSubtitle}</p>
+          <div className="rounded-xl border bg-card/40 p-3">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pilih Kolam</label>
+              {pondsLoading ? <span className="text-xs text-muted-foreground">Memuat...</span> : null}
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {ponds.length === 0 ? (
+                <span className="text-sm text-muted-foreground">Belum ada kolam.</span>
+              ) : (
+                ponds.map((pond) => {
+                  const isActive = pond.id === selectedPondId
+
+                  return (
+                    <Button
+                      key={pond.id}
+                      type="button"
+                      variant={isActive ? "default" : "outline"}
+                      className="h-auto min-w-44 justify-start px-3 py-2 text-left"
+                      onClick={() => handlePondChange(pond.id)}
+                    >
+                      <span className="block">
+                        <span className="block text-sm font-semibold">{pond.name || `Kolam ${pond.id.slice(0, 6)}`}</span>
+                        <span className="block text-xs opacity-80">{pond.location || "Lokasi belum diisi"}</span>
+                      </span>
+                    </Button>
+                  )
+                })
+              )}
+            </div>
+            {pondsError ? <span className="mt-2 block text-xs text-destructive">{pondsError}</span> : null}
+          </div>
         </div>
         <div className="flex items-center gap-2 bg-card px-4 py-2 border rounded-full shadow-sm">
           <span className="relative flex h-3 w-3">
@@ -59,7 +92,9 @@ export default function DashboardPage() {
             <Thermometer className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">28.5°C</div>
+            <div className="text-2xl font-bold">
+              {latestSensor?.temperature != null ? `${latestSensor.temperature}°C` : "--"}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
               <CheckCircle className="h-3 w-3 text-green-500 mr-1" /> Normal
             </p>
@@ -71,7 +106,9 @@ export default function DashboardPage() {
             <Activity className="h-4 w-4 text-cyan-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">7.5</div>
+            <div className="text-2xl font-bold">
+              {latestSensor?.ph != null ? latestSensor.ph : "--"}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
               <CheckCircle className="h-3 w-3 text-green-500 mr-1" /> Optimal (Lele: 6.5-8.0)
             </p>
@@ -79,25 +116,31 @@ export default function DashboardPage() {
         </Card>
         <Card className="border-l-4 border-l-indigo-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Oksigen Terlarut (DO)</CardTitle>
+            <CardTitle className="text-sm font-medium">Kekeruhan (Turbidity)</CardTitle>
             <Wind className="h-4 w-4 text-indigo-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">7.2 mg/L</div>
+            <div className="text-2xl font-bold">
+              {latestSensor?.turbidity != null ? `${latestSensor.turbidity}` : "--"}
+            </div>
             <p className="text-xs text-muted-foreground flex items-center mt-1">
-              <CheckCircle className="h-3 w-3 text-green-500 mr-1" /> Baik (&gt;5.0 mg/L)
+              <CheckCircle className="h-3 w-3 text-green-500" />
+              <span className="ml-1">Pantau tingkat kekeruhan</span>
             </p>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-amber-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ammonia (NH3)</CardTitle>
+            <CardTitle className="text-sm font-medium">Ketinggian Air</CardTitle>
             <Droplets className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-500">0.03 mg/L</div>
-            <p className="text-xs text-muted-foreground flex items-center mt-1 text-amber-500">
-              <AlertTriangle className="h-3 w-3 mr-1" /> Peringatan (Mendekati 0.05)
+            <div className="text-2xl font-bold text-amber-500">
+              {latestSensor?.waterLevel != null ? `${latestSensor.waterLevel} ml` : "--"}
+            </div>
+            <p className="mt-1 flex items-center text-xs text-amber-500">
+              <AlertTriangle className="h-3 w-3" />
+              <span className="ml-1">Cek tinggi air secara berkala</span>
             </p>
           </CardContent>
         </Card>
@@ -112,9 +155,9 @@ export default function DashboardPage() {
               <CardDescription>Data historis untuk Suhu, pH, dan DO</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+              <div className="h-75 min-h-75 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.2} />
                     <XAxis dataKey="time" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
@@ -124,10 +167,17 @@ export default function DashboardPage() {
                     />
                     <Line type="monotone" dataKey="temp" name="Suhu (°C)" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                     <Line type="monotone" dataKey="ph" name="pH" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                    <Line type="monotone" dataKey="do" name="DO (mg/L)" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="turbidity" name="Turbidity" stroke="#6366f1" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="waterLevel" name="Tinggi Air (ml)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+              {sensorsLoading ? (
+                <p className="mt-3 text-xs text-muted-foreground">Memuat data sensor...</p>
+              ) : null}
+              {sensorsError ? (
+                <p className="mt-3 text-xs text-destructive">{sensorsError}</p>
+              ) : null}
             </CardContent>
           </Card>
           
