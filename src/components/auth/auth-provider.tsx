@@ -1,13 +1,16 @@
 "use client"
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react"
-import { onAuthStateChanged, signOut, type User } from "firebase/auth"
+import { onAuthStateChanged, signOut, signInWithPopup, GoogleAuthProvider, type User } from "firebase/auth"
 import { auth } from "@/lib/db/firebase"
+import { doc, serverTimestamp, setDoc } from "firebase/firestore"
+import { db } from "@/lib/db/firebase"
 
 type AuthContextValue = {
   user: User | null
   loading: boolean
   logout: () => Promise<void>
+  signInWithGoogle: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -46,7 +49,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut(auth)
   }
 
-  const value = useMemo(() => ({ user, loading, logout }), [user, loading])
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider()
+    const result = await signInWithPopup(auth, provider)
+    const firebaseUser = result.user
+
+    // Sync user data to Firestore
+    await setDoc(
+      doc(db, "users", firebaseUser.uid),
+      {
+        name: firebaseUser.displayName || "",
+        email: firebaseUser.email || "",
+        photoURL: firebaseUser.photoURL || "",
+        role: "user",
+        createdAt: serverTimestamp(),
+      },
+      { merge: true }
+    )
+  }
+
+  const value = useMemo(() => ({ user, loading, logout, signInWithGoogle }), [user, loading])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
