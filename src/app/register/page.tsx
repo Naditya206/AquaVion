@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth/auth-provider"
-import { GoogleSignInButton } from "@/components/auth/google-signin-button"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -158,17 +157,6 @@ export default function RegisterPage() {
             >
               {successMessage ? "Mengalihkan..." : submitting ? "Memproses..." : "Daftar"}
             </button>
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Atau</span>
-              </div>
-            </div>
-
-            <GoogleSignInButton />
           </form>
           <p className="mt-4 text-sm text-muted-foreground">
             Sudah punya akun?{" "}
