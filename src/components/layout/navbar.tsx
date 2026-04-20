@@ -51,12 +51,22 @@ export function Navbar() {
             </div>
           )}
           {!loading && user && (
-            <button
-              onClick={logout}
-              className={cn(buttonVariants({ variant: "destructive" }))}
-            >
-              Keluar
-            </button>
+            <div className="flex items-center gap-3">
+              {user.photoURL && (
+                <img 
+                  src={user.photoURL} 
+                  alt={user.displayName || "User"} 
+                  className="h-8 w-8 rounded-full border-2 border-primary object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              )}
+              <button
+                onClick={logout}
+                className={cn(buttonVariants({ variant: "destructive" }))}
+              >
+                Keluar
+              </button>
+            </div>
           )}
           {loading && (
             <div className={cn(buttonVariants({ variant: "default" }), "pointer-events-none opacity-70")}>

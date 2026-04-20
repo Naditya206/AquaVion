@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/components/auth/auth-provider"
+import { GoogleSignInButton } from "@/components/auth/google-signin-button"
 
 function LoginForm() {
   const router = useRouter()
@@ -133,6 +134,17 @@ function LoginForm() {
           >
             {submitting ? "Memproses..." : "Masuk"}
           </button>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Atau</span>
+            </div>
+          </div>
+
+          <GoogleSignInButton callbackUrl={redirectTo} />
         </form>
         <p className="mt-4 text-sm text-muted-foreground">
           Belum punya akun?{" "}
