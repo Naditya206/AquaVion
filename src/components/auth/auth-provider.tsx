@@ -5,6 +5,7 @@ import { onAuthStateChanged, signOut, signInWithPopup, GoogleAuthProvider, type 
 import { auth } from "@/lib/db/firebase"
 import { doc, serverTimestamp, setDoc } from "firebase/firestore"
 import { db } from "@/lib/db/firebase"
+import { LoadingScreen } from "@/components/loading-screen"
 
 type AuthContextValue = {
   user: User | null
@@ -34,13 +35,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Faster timeout for auth check
+    const authTimeout = setTimeout(() => {
+      if (loading) {
+        setLoading(false)
+      }
+    }, 3000)
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
       setAuthCookie(currentUser?.uid ?? null)
       setLoading(false)
+      clearTimeout(authTimeout)
     })
 
-    return () => unsubscribe()
+    return () => {
+      unsubscribe()
+      clearTimeout(authTimeout)
+    }
   }, [])
 
   const logout = async () => {
@@ -69,6 +81,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo(() => ({ user, loading, logout, signInWithGoogle }), [user, loading])
+
+  if (loading) {
+    return <LoadingScreen />
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
