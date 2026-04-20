@@ -51,12 +51,22 @@ export function Navbar() {
             </div>
           )}
           {!loading && user && (
-            <button
-              onClick={logout}
-              className={cn(buttonVariants({ variant: "destructive" }))}
-            >
-              Keluar
-            </button>
+            <div className="flex items-center gap-3">
+              {user.photoURL && (
+                <img 
+                  src={user.photoURL} 
+                  alt={user.displayName || "User"} 
+                  className="h-8 w-8 rounded-full border-2 border-primary object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              )}
+              <button
+                onClick={logout}
+                className={cn(buttonVariants({ variant: "destructive" }))}
+              >
+                Keluar
+              </button>
+            </div>
           )}
           {loading && (
             <div className={cn(buttonVariants({ variant: "default" }), "pointer-events-none opacity-70")}>
@@ -110,15 +120,31 @@ export function Navbar() {
               </div>
             )}
             {!loading && user && (
-              <button
-                onClick={async () => {
-                  await logout()
-                  setIsOpen(false)
-                }}
-                className={cn(buttonVariants({ variant: "destructive" }), "w-full justify-center")}
-              >
-                Keluar
-              </button>
+              <div className="space-y-2">
+                {user.photoURL && (
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <img 
+                      src={user.photoURL} 
+                      alt={user.displayName || "User"} 
+                      className="h-10 w-10 rounded-full border-2 border-primary object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{user.displayName || "User"}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={async () => {
+                    await logout()
+                    setIsOpen(false)
+                  }}
+                  className={cn(buttonVariants({ variant: "destructive" }), "w-full justify-center")}
+                >
+                  Keluar
+                </button>
+              </div>
             )}
             {loading && (
               <div className={cn(buttonVariants({ variant: "default" }), "w-full justify-center pointer-events-none opacity-70")}>
