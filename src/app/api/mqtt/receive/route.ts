@@ -24,12 +24,18 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
+    console.log(`Incoming request for User: ${ownerId}, Device: ${device_id}`);
+
     // Find pond with this device_id
     const pondsRef = collection(db, "users", ownerId, "ponds")
     const pondsSnapshot = await getDocs(pondsRef)
     
+    console.log(`Found ${pondsSnapshot.size} ponds for this user`);
+
     for (const pondDoc of pondsSnapshot.docs) {
-      if (pondDoc.data().device_id === device_id) {
+      const data = pondDoc.data();
+      console.log(`Checking pond ${pondDoc.id} with device_id: "${data.device_id}"`);
+      if (data.device_id?.trim() === device_id.trim()) {
         pondId = pondDoc.id
         break
       }

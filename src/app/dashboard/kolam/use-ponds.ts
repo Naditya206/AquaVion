@@ -160,10 +160,10 @@ export function usePonds() {
         name: formData.name.trim(),
         location: formData.location.trim(),
         device_id: formData.device_id.trim(),
-        size: formData.size,
-        fishCount: formData.fishCount,
-        depth: formData.depth,
-        thresholds: formData.thresholds,
+        size: formData.size ?? null,
+        fishCount: formData.fishCount ?? null,
+        depth: formData.depth ?? null,
+        thresholds: formData.thresholds ?? null,
       }
 
       if (editingId) {
