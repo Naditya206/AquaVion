@@ -138,8 +138,13 @@ export default function ProfilePage() {
                 <h3 className="font-semibold text-lg">{name || "Pengguna Baru"}</h3>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
               </div>
-              <div className="bg-primary/10 px-3 py-1 rounded-full text-xs font-semibold text-primary">
-                {role}
+              <div className="flex flex-col gap-2">
+                <div className="bg-primary/10 px-3 py-1 rounded-full text-xs font-semibold text-primary mx-auto w-fit">
+                  {role}
+                </div>
+                <div className="text-[10px] text-muted-foreground font-mono bg-muted p-1 rounded border">
+                  UID: {user.uid}
+                </div>
               </div>
             </CardContent>
           </Card>
