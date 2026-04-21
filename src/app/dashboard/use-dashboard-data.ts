@@ -22,6 +22,7 @@ type SensorRecord = {
   temperature?: number
   turbidity?: number
   waterLevel?: number
+  actions?: string[]
   createdAt?: string
 }
 
@@ -176,6 +177,7 @@ export function useDashboardData() {
               temperature: data.temperature ?? null,
               turbidity: data.turbidity ?? null,
               waterLevel: data.waterLevel ?? data.water_level ?? null,
+              actions: data.actions ?? [],
               createdAt,
             }
           })

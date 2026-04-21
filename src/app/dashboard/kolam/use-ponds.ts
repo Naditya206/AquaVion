@@ -11,6 +11,18 @@ type Kolam = {
   name: string
   location: string
   device_id: string
+  size?: number
+  fishCount?: number
+  depth?: number
+  thresholds?: {
+    phMin?: number
+    phMax?: number
+    tempMin?: number
+    tempMax?: number
+    turbidityMax?: number
+    waterLevelMin?: number
+    waterLevelMax?: number
+  }
   created_at?: string
 }
 
@@ -18,9 +30,26 @@ type FormData = {
   name: string
   location: string
   device_id: string
+  size?: number
+  fishCount?: number
+  depth?: number
+  thresholds?: {
+    phMin?: number
+    phMax?: number
+    tempMin?: number
+    tempMax?: number
+    turbidityMax?: number
+    waterLevelMin?: number
+    waterLevelMax?: number
+  }
 }
 
-const EMPTY_FORM: FormData = { name: "", location: "", device_id: "" }
+const EMPTY_FORM: FormData = { 
+  name: "", 
+  location: "", 
+  device_id: "",
+  thresholds: {}
+}
 
 const parseFirestoreDate = (value: unknown): string | undefined => {
   if (!value) return undefined
@@ -54,11 +83,12 @@ export function usePonds() {
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<FormData>(EMPTY_FORM)
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login?next=/dashboard/kolam")
-    }
-  }, [loading, router, user])
+  // Removed automatic redirect - let user stay on page
+  // useEffect(() => {
+  //   if (!loading && !user) {
+  //     router.replace("/login?next=/dashboard/kolam")
+  //   }
+  // }, [loading, router, user])
 
   useEffect(() => {
     if (!user) {
@@ -108,7 +138,15 @@ export function usePonds() {
 
   const handleEdit = (k: Kolam) => {
     setEditingId(k.id)
-    setFormData({ name: k.name, location: k.location, device_id: k.device_id })
+    setFormData({ 
+      name: k.name, 
+      location: k.location, 
+      device_id: k.device_id,
+      size: k.size,
+      fishCount: k.fishCount,
+      depth: k.depth,
+      thresholds: k.thresholds || {}
+    })
     setIsAdding(true)
   }
 
@@ -118,14 +156,22 @@ export function usePonds() {
     setError(null)
 
     try {
+      const pondData = {
+        name: formData.name.trim(),
+        location: formData.location.trim(),
+        device_id: formData.device_id.trim(),
+        size: formData.size,
+        fishCount: formData.fishCount,
+        depth: formData.depth,
+        thresholds: formData.thresholds,
+      }
+
       if (editingId) {
         const pondRef = doc(db, "users", user.uid, "ponds", editingId)
         await setDoc(
           pondRef,
           {
-            name: formData.name.trim(),
-            location: formData.location.trim(),
-            device_id: formData.device_id.trim(),
+            ...pondData,
             updatedAt: serverTimestamp(),
           },
           { merge: true }
@@ -133,9 +179,7 @@ export function usePonds() {
       } else {
         const pondRef = doc(collection(db, "users", user.uid, "ponds"))
         await setDoc(pondRef, {
-          name: formData.name.trim(),
-          location: formData.location.trim(),
-          device_id: formData.device_id.trim(),
+          ...pondData,
           createdAt: serverTimestamp(),
         })
       }

@@ -43,7 +43,7 @@ export default function KolamManagementPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl flex-1">
+    <div className="flex flex-1 flex-col gap-4 w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Manajemen Kolam</h1>
@@ -69,36 +69,152 @@ export default function KolamManagementPage() {
             <CardDescription>Masukkan detail identitas kolam di bawah ini.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Nama Kolam</label>
+                <label className="text-sm font-medium">Nama Kolam *</label>
                 <input 
                   type="text" 
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   placeholder="Misal: Kolam Lele Pembibitan"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Lokasi</label>
+                <label className="text-sm font-medium">Lokasi *</label>
                 <input 
                   type="text" 
                   value={formData.location}
                   onChange={(e) => setFormData({...formData, location: e.target.value})}
                   className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   placeholder="Misal: Blok Selatan"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">ID Alat (Device ID IoT)</label>
+                <label className="text-sm font-medium">ID Alat (Device ID IoT) *</label>
                 <input 
                   type="text" 
                   value={formData.device_id}
                   onChange={(e) => setFormData({...formData, device_id: e.target.value})}
                   className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   placeholder="Misal: AQN-IOT-002"
+                  required
                 />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Ukuran Kolam (m²)</label>
+                <input 
+                  type="number" 
+                  value={formData.size || ''}
+                  onChange={(e) => setFormData({...formData, size: e.target.value ? Number(e.target.value) : undefined})}
+                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder="Misal: 50"
+                  min="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Jumlah Ikan (ekor)</label>
+                <input 
+                  type="number" 
+                  value={formData.fishCount || ''}
+                  onChange={(e) => setFormData({...formData, fishCount: e.target.value ? Number(e.target.value) : undefined})}
+                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder="Misal: 1000"
+                  min="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Kedalaman Air (cm)</label>
+                <input 
+                  type="number" 
+                  value={formData.depth || ''}
+                  onChange={(e) => setFormData({...formData, depth: e.target.value ? Number(e.target.value) : undefined})}
+                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder="Misal: 80"
+                  min="0"
+                />
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold mb-3 text-primary">Threshold Sensor (Opsional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg border">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">pH Min</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    value={formData.thresholds?.phMin || ''}
+                    onChange={(e) => setFormData({...formData, thresholds: {...formData.thresholds, phMin: e.target.value ? Number(e.target.value) : undefined}})}
+                    className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="6.5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">pH Max</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    value={formData.thresholds?.phMax || ''}
+                    onChange={(e) => setFormData({...formData, thresholds: {...formData.thresholds, phMax: e.target.value ? Number(e.target.value) : undefined}})}
+                    className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="8.5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Suhu Min (°C)</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    value={formData.thresholds?.tempMin || ''}
+                    onChange={(e) => setFormData({...formData, thresholds: {...formData.thresholds, tempMin: e.target.value ? Number(e.target.value) : undefined}})}
+                    className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="25"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Suhu Max (°C)</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    value={formData.thresholds?.tempMax || ''}
+                    onChange={(e) => setFormData({...formData, thresholds: {...formData.thresholds, tempMax: e.target.value ? Number(e.target.value) : undefined}})}
+                    className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="30"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Turbidity Max (NTU)</label>
+                  <input 
+                    type="number" 
+                    value={formData.thresholds?.turbidityMax || ''}
+                    onChange={(e) => setFormData({...formData, thresholds: {...formData.thresholds, turbidityMax: e.target.value ? Number(e.target.value) : undefined}})}
+                    className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="400"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Tinggi Air Min (cm)</label>
+                  <input 
+                    type="number" 
+                    value={formData.thresholds?.waterLevelMin || ''}
+                    onChange={(e) => setFormData({...formData, thresholds: {...formData.thresholds, waterLevelMin: e.target.value ? Number(e.target.value) : undefined}})}
+                    className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground">Tinggi Air Max (cm)</label>
+                  <input 
+                    type="number" 
+                    value={formData.thresholds?.waterLevelMax || ''}
+                    onChange={(e) => setFormData({...formData, thresholds: {...formData.thresholds, waterLevelMax: e.target.value ? Number(e.target.value) : undefined}})}
+                    className="w-full flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="70"
+                  />
+                </div>
               </div>
             </div>
             <div className="flex gap-2">
