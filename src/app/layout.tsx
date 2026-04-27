@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { SerialProvider } from "@/context/SerialContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -53,11 +54,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <Navbar />
-            <main className="flex-1 flex flex-col">
-              {children}
-            </main>
-            <Footer />
+            <SerialProvider>
+              <Navbar />
+              <main className="flex-1 flex flex-col">
+                {children}
+              </main>
+              <Footer />
+            </SerialProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

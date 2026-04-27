@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Plus, Edit2, Trash2, Check, X, Eye } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { usePonds } from "@/app/dashboard/kolam/use-ponds"
+import { useWebSerial } from "@/hooks/use-web-serial"
+import { Monitor, RefreshCcw, Wifi, WifiOff } from "lucide-react"
 
 export default function KolamManagementPage() {
   const router = useRouter()
@@ -25,6 +27,8 @@ export default function KolamManagementPage() {
     handleSave,
     handleDelete,
   } = usePonds()
+
+  const { isConnected, data: serialData, error: serialError, connect: connectSerial, disconnect: disconnectSerial } = useWebSerial()
 
   const openMonitoring = (pondId: string) => {
     if (typeof window !== "undefined") {
@@ -69,6 +73,63 @@ export default function KolamManagementPage() {
             <CardDescription>Masukkan detail identitas kolam di bawah ini.</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Direct USB Serial Connection */}
+            <div className="mb-6 p-4 rounded-xl border bg-muted/50">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold text-sm">Hubungkan Sensor Langsung (USB/COM7)</h3>
+                </div>
+                <Button 
+                  type="button" 
+                  variant={isConnected ? "destructive" : "default"}
+                  size="sm"
+                  onClick={isConnected ? disconnectSerial : connectSerial}
+                >
+                  {isConnected ? (
+                    <><WifiOff className="mr-2 h-4 w-4" /> Putuskan USB</>
+                  ) : (
+                    <><Wifi className="mr-2 h-4 w-4" /> Hubungkan USB</>
+                  )}
+                </Button>
+              </div>
+
+              {isConnected ? (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-background p-2 rounded-lg border text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Suhu</p>
+                      <p className="text-lg font-mono font-bold text-blue-500">{serialData.temperature ?? "---"}°C</p>
+                    </div>
+                    <div className="bg-background p-2 rounded-lg border text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">pH</p>
+                      <p className="text-lg font-mono font-bold text-cyan-500">{serialData.ph ?? "---"}</p>
+                    </div>
+                    <div className="bg-background p-2 rounded-lg border text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Air</p>
+                      <p className="text-lg font-mono font-bold text-amber-500">{serialData.waterLevel ?? "---"}cm</p>
+                    </div>
+                    <div className="bg-background p-2 rounded-lg border text-center">
+                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Keruh</p>
+                      <p className="text-lg font-mono font-bold text-indigo-500">{serialData.turbidity ?? "---"}</p>
+                    </div>
+                  </div>
+                  {serialData.raw && (
+                    <div className="mt-4 p-2 bg-black/20 rounded font-mono text-[10px] text-muted-foreground truncate border-t border-white/5">
+                      <span className="text-primary mr-2">RAW:</span> {serialData.raw}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">
+                  Gunakan fitur ini untuk melihat pembacaan sensor secara langsung dari Port COM laptop Anda.
+                </p>
+              )}
+              {serialError && (
+                <p className="mt-2 text-xs text-red-500 font-medium">⚠️ {serialError}</p>
+              )}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Nama Kolam *</label>
