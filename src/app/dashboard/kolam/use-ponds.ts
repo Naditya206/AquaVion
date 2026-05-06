@@ -112,6 +112,10 @@ export function usePonds() {
               name: data.name ?? "",
               location: data.location ?? "",
               device_id: data.device_id ?? "",
+              size: data.size,
+              fishCount: data.fishCount,
+              depth: data.depth,
+              thresholds: data.thresholds,
               created_at: createdAt,
             }
           })
@@ -163,7 +167,7 @@ export function usePonds() {
         size: formData.size ?? null,
         fishCount: formData.fishCount ?? null,
         depth: formData.depth ?? null,
-        thresholds: formData.thresholds ?? null,
+        thresholds: formData.thresholds || {},
       }
 
       if (editingId) {
