@@ -18,11 +18,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? process.env.FIREBASE_APP_ID,
 };
 
+import { getDatabase } from "firebase/database";
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const rtdb = getDatabase(app);
 
-
-export { db, auth };
+export { db, auth, rtdb };
 export default app;

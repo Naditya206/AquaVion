@@ -113,7 +113,7 @@ export default function DashboardPage() {
                     Monitor USB (COM7)
                   </div>
                   <Button 
-                    size="xs" 
+                    size="sm" 
                     variant={isConnected ? "destructive" : "outline"}
                     className="h-7 text-[10px] px-2"
                     onClick={isConnected ? disconnectSerial : connectSerial}
