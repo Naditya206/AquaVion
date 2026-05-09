@@ -1,6 +1,4 @@
-import { rtdb } from "@/lib/db/firebase";
-import { adminDb } from "@/lib/db/firebase-admin";
-import { ref, push, get, query, limitToLast, set } from "firebase/database";
+import { adminDb, adminRtdb } from "@/lib/db/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 
 export async function GET(req: Request) {
@@ -18,9 +16,8 @@ export async function GET(req: Request) {
       ? Math.min(Math.max(limitParam, 1), 200)
       : 24;
 
-    const dbRef = ref(rtdb, `sensors/${uid}/${pondId}/readings`);
-    const q = query(dbRef, limitToLast(safeLimit));
-    const snapshot = await get(q);
+    const dbRef = adminRtdb.ref(`sensors/${uid}/${pondId}/readings`);
+    const snapshot = await dbRef.limitToLast(safeLimit).get();
 
     let sensors: any[] = [];
     if (snapshot.exists()) {
@@ -81,7 +78,7 @@ export async function POST(req: Request) {
       if (turbidity > 400) actions.push("Air Kotor → Siphon / drainase / probiotik");
     }
 
-    const dbRef = ref(rtdb, `sensors/${uid}/${pondId}/readings`);
+    const dbRef = adminRtdb.ref(`sensors/${uid}/${pondId}/readings`);
     const nowISO = new Date().toISOString();
 
     const payload = {
@@ -96,8 +93,8 @@ export async function POST(req: Request) {
     let rtdbOk = false;
     let firestoreOk = false;
 
-    const newRef = push(dbRef);
-    await set(newRef, payload);
+    const newRef = dbRef.push();
+    await newRef.set(payload);
     rtdbOk = true;
 
     // Simpan histori permanen ke Firestore
@@ -108,8 +105,8 @@ export async function POST(req: Request) {
     });
     firestoreOk = true;
 
-    const latestRef = ref(rtdb, `sensors/${uid}/${pondId}/latest`);
-    await set(latestRef, payload);
+    const latestRef = adminRtdb.ref(`sensors/${uid}/${pondId}/latest`);
+    await latestRef.set(payload);
 
     if (actions.length > 0) {
       console.log(`Peringatan Kolam ${pondId}:`, actions);
