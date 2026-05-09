@@ -48,7 +48,12 @@ export default function HistoryPage() {
         queryUrl += `&startDate=${startDate}&endDate=${endDate}`;
       }
       
-      const res = await fetch(queryUrl);
+      const token = await user.getIdToken();
+      const res = await fetch(queryUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const json = await res.json();
       
       if (res.ok) {

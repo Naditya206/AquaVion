@@ -1,6 +1,7 @@
-import { db, rtdb } from "@/lib/db/firebase";
+import { rtdb } from "@/lib/db/firebase";
+import { adminDb } from "@/lib/db/firebase-admin";
 import { ref, push, get, query, limitToLast, set } from "firebase/database";
-import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function GET(req: Request) {
   try {
@@ -100,9 +101,9 @@ export async function POST(req: Request) {
     rtdbOk = true;
 
     // Simpan histori permanen ke Firestore
-    await addDoc(collection(db, "users", uid, "ponds", pondId, "sensors"), {
+    await adminDb.collection("users").doc(uid).collection("ponds").doc(pondId).collection("sensors").add({
       ...payload,
-      createdAt: serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       source: "iot",
     });
     firestoreOk = true;
@@ -113,12 +114,12 @@ export async function POST(req: Request) {
     if (actions.length > 0) {
       console.log(`Peringatan Kolam ${pondId}:`, actions);
       try {
-        const settingsRef = doc(db, "users", uid, "settings", "config");
-        const settingsSnap = await getDoc(settingsRef);
+        const settingsRef = adminDb.collection("users").doc(uid).collection("settings").doc("config");
+        const settingsSnap = await settingsRef.get();
 
         let pondName = `Kolam ${pondId}`;
-        const pondRef = doc(db, "users", uid, "ponds", pondId);
-        const pondSnap = await getDoc(pondRef);
+        const pondRef = adminDb.collection("users").doc(uid).collection("ponds").doc(pondId);
+        const pondSnap = await pondRef.get();
         if (pondSnap.exists() && pondSnap.data().name) {
           pondName = pondSnap.data().name;
         }
@@ -143,8 +144,8 @@ export async function POST(req: Request) {
           }
 
           if (config.webPushEnabled) {
-             const subRef = doc(db, "users", uid, "settings", "push_subs");
-             const subSnap = await getDoc(subRef);
+             const subRef = adminDb.collection("users").doc(uid).collection("settings").doc("push_subs");
+             const subSnap = await subRef.get();
              if (subSnap.exists() && subSnap.data().subscription) {
                 try {
                   const webpush = require("web-push");
