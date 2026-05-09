@@ -1,6 +1,6 @@
 import { db, rtdb } from "@/lib/db/firebase";
-import { ref, push, get, query, limitToLast } from "firebase/database";
-import { doc, getDoc } from "firebase/firestore";
+import { ref, push, get, query, limitToLast, set } from "firebase/database";
+import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 
 export async function GET(req: Request) {
   try {
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       ? Math.min(Math.max(limitParam, 1), 200)
       : 24;
 
-    const dbRef = ref(rtdb, `users/${uid}/ponds/${pondId}/sensors`);
+    const dbRef = ref(rtdb, `sensors/${uid}/${pondId}/readings`);
     const q = query(dbRef, limitToLast(safeLimit));
     const snapshot = await get(q);
 
@@ -80,17 +80,35 @@ export async function POST(req: Request) {
       if (turbidity > 400) actions.push("Air Kotor → Siphon / drainase / probiotik");
     }
 
-    const dbRef = ref(rtdb, `users/${uid}/ponds/${pondId}/sensors`);
+    const dbRef = ref(rtdb, `sensors/${uid}/${pondId}/readings`);
     const nowISO = new Date().toISOString();
 
-    await push(dbRef, {
+    const payload = {
       ph: ph ?? null,
       turbidity: turbidity ?? null,
       temperature: temperature ?? null,
       waterLevel: waterLevel ?? null,
       actions,
       createdAt: nowISO,
+    };
+
+    let rtdbOk = false;
+    let firestoreOk = false;
+
+    const newRef = push(dbRef);
+    await set(newRef, payload);
+    rtdbOk = true;
+
+    // Simpan histori permanen ke Firestore
+    await addDoc(collection(db, "users", uid, "ponds", pondId, "sensors"), {
+      ...payload,
+      createdAt: serverTimestamp(),
+      source: "iot",
     });
+    firestoreOk = true;
+
+    const latestRef = ref(rtdb, `sensors/${uid}/${pondId}/latest`);
+    await set(latestRef, payload);
 
     if (actions.length > 0) {
       console.log(`Peringatan Kolam ${pondId}:`, actions);
@@ -155,7 +173,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return Response.json({ status: "success", message: "Data received", actions });
+    return Response.json({ status: "success", message: "Data received", actions, rtdbOk, firestoreOk });
   } catch (error: any) {
     return Response.json({ status: "error", error: error.message }, { status: 500 });
   }
