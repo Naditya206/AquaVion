@@ -1,5 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { MonitorSmartphone, Wifi, PlusCircle, BellRing, ShieldCheck, HeartPulse } from "lucide-react"
 
 export default function GuidebookPage() {
   return (
