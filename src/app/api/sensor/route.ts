@@ -117,11 +117,12 @@ export async function POST(req: Request) {
         let pondName = `Kolam ${pondId}`;
         const pondRef = adminDb.collection("users").doc(uid).collection("ponds").doc(pondId);
         const pondSnap = await pondRef.get();
-        if (pondSnap.exists() && pondSnap.data().name) {
-          pondName = pondSnap.data().name;
+        const pondData = pondSnap.data();
+        if (pondSnap.exists && pondData?.name) {
+          pondName = pondData.name;
         }
 
-        if (settingsSnap.exists()) {
+        if (settingsSnap.exists) {
           const config = settingsSnap.data();
           if (config.telegramEnabled && config.botToken && config.chatId) {
             const message = `🚨 *PERINGATAN AQUAVION*\nTarget: *${pondName}*\n\nKondisi terdeteksi:\n` + actions.map((a: string) => `• ${a}`).join("\n");
@@ -143,7 +144,8 @@ export async function POST(req: Request) {
           if (config.webPushEnabled) {
              const subRef = adminDb.collection("users").doc(uid).collection("settings").doc("push_subs");
              const subSnap = await subRef.get();
-             if (subSnap.exists() && subSnap.data().subscription) {
+             const subData = subSnap.data();
+             if (subSnap.exists && subData?.subscription) {
                 try {
                   const webpush = require("web-push");
                   webpush.setVapidDetails(
@@ -152,7 +154,7 @@ export async function POST(req: Request) {
                     process.env.VAPID_PRIVATE_KEY as string
                   );
                   await webpush.sendNotification(
-                    subSnap.data().subscription,
+                    subData.subscription,
                     JSON.stringify({
                       title: `AQUAVION BAHAYA: ${pondName}`,
                       body: actions.map((a: string) => `• ${a}`).join("\n"),
