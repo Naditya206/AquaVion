@@ -48,7 +48,8 @@ export default function DashboardPage() {
     ph: serialData.ph ?? latestSensor?.ph,
     turbidity: serialData.turbidity ?? latestSensor?.turbidity,
     waterLevel: serialData.waterLevel ?? latestSensor?.waterLevel,
-    actions: latestSensor?.actions // Keep AI actions from DB
+    actions: latestSensor?.actions, // Keep AI actions from DB
+    createdAt: new Date().toISOString() // Show current time when streaming
   } : latestSensor
 
   const headerSubtitle = useMemo(() => {
@@ -137,12 +138,24 @@ export default function DashboardPage() {
             {pondsError ? <span className="mt-2 block text-xs text-destructive">{pondsError}</span> : null}
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-card px-3 py-1.5 md:px-4 md:py-2 border rounded-full shadow-sm">
-          <span className="relative flex h-2 w-2 md:h-3 md:w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-green-500"></span>
-          </span>
-          <span className="text-xs md:text-sm font-medium">Sistem Daring</span>
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex items-center gap-2 bg-card px-3 py-1.5 md:px-4 md:py-2 border rounded-full shadow-sm w-fit">
+            <span className="relative flex h-2 w-2 md:h-3 md:w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-green-500"></span>
+            </span>
+            <span className="text-xs md:text-sm font-medium">Sistem Daring</span>
+          </div>
+          <div className="text-[10px] md:text-xs text-muted-foreground font-medium pr-1 text-right">
+            Terakhir update:<br className="md:hidden" /> {activeSensor?.createdAt ? new Intl.DateTimeFormat("id-ID", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit"
+            }).format(new Date(activeSensor.createdAt)).replace(/\./g, ':') : "Belum ada data"}
+          </div>
         </div>
       </div>
 
