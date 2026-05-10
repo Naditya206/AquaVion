@@ -24,7 +24,10 @@ import { getDatabase } from "firebase/database";
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const rtdb = getDatabase(app);
+const rtdb = getDatabase(
+  app,
+  "https://aquavion-26-default-rtdb.asia-southeast1.firebasedatabase.app"
+);
 
 export { db, auth, rtdb };
 export default app;
