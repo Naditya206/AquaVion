@@ -1,6 +1,5 @@
-import { db, rtdb } from "@/lib/db/firebase";
-import { ref, push, get, query, limitToLast } from "firebase/database";
-import { doc, getDoc } from "firebase/firestore";
+import { adminDb, adminRtdb } from "@/lib/db/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function GET(req: Request) {
   try {
@@ -17,9 +16,8 @@ export async function GET(req: Request) {
       ? Math.min(Math.max(limitParam, 1), 200)
       : 24;
 
-    const dbRef = ref(rtdb, `users/${uid}/ponds/${pondId}/sensors`);
-    const q = query(dbRef, limitToLast(safeLimit));
-    const snapshot = await get(q);
+    const dbRef = adminRtdb.ref(`sensors/${uid}/${pondId}/readings`);
+    const snapshot = await dbRef.limitToLast(safeLimit).get();
 
     let sensors: any[] = [];
     if (snapshot.exists()) {
@@ -80,27 +78,45 @@ export async function POST(req: Request) {
       if (turbidity > 400) actions.push("Air Kotor → Siphon / drainase / probiotik");
     }
 
-    const dbRef = ref(rtdb, `users/${uid}/ponds/${pondId}/sensors`);
+    const dbRef = adminRtdb.ref(`sensors/${uid}/${pondId}/readings`);
     const nowISO = new Date().toISOString();
 
-    await push(dbRef, {
+    const payload = {
       ph: ph ?? null,
       turbidity: turbidity ?? null,
       temperature: temperature ?? null,
       waterLevel: waterLevel ?? null,
       actions,
       createdAt: nowISO,
+    };
+
+    let rtdbOk = false;
+    let firestoreOk = false;
+
+    const newRef = dbRef.push();
+    await newRef.set(payload);
+    rtdbOk = true;
+
+    // Simpan histori permanen ke Firestore
+    await adminDb.collection("users").doc(uid).collection("ponds").doc(pondId).collection("sensors").add({
+      ...payload,
+      createdAt: FieldValue.serverTimestamp(),
+      source: "iot",
     });
+    firestoreOk = true;
+
+    const latestRef = adminRtdb.ref(`sensors/${uid}/${pondId}/latest`);
+    await latestRef.set(payload);
 
     if (actions.length > 0) {
       console.log(`Peringatan Kolam ${pondId}:`, actions);
       try {
-        const settingsRef = doc(db, "users", uid, "settings", "config");
-        const settingsSnap = await getDoc(settingsRef);
+        const settingsRef = adminDb.collection("users").doc(uid).collection("settings").doc("config");
+        const settingsSnap = await settingsRef.get();
 
         let pondName = `Kolam ${pondId}`;
-        const pondRef = doc(db, "users", uid, "ponds", pondId);
-        const pondSnap = await getDoc(pondRef);
+        const pondRef = adminDb.collection("users").doc(uid).collection("ponds").doc(pondId);
+        const pondSnap = await pondRef.get();
         if (pondSnap.exists() && pondSnap.data().name) {
           pondName = pondSnap.data().name;
         }
@@ -125,8 +141,8 @@ export async function POST(req: Request) {
           }
 
           if (config.webPushEnabled) {
-             const subRef = doc(db, "users", uid, "settings", "push_subs");
-             const subSnap = await getDoc(subRef);
+             const subRef = adminDb.collection("users").doc(uid).collection("settings").doc("push_subs");
+             const subSnap = await subRef.get();
              if (subSnap.exists() && subSnap.data().subscription) {
                 try {
                   const webpush = require("web-push");
@@ -155,7 +171,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return Response.json({ status: "success", message: "Data received", actions });
+    return Response.json({ status: "success", message: "Data received", actions, rtdbOk, firestoreOk });
   } catch (error: any) {
     return Response.json({ status: "error", error: error.message }, { status: 500 });
   }

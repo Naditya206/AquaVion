@@ -1,5 +1,5 @@
-import { db } from "@/lib/db/firebase";
-import { collection, getDocs, query, where, orderBy, Timestamp } from "firebase/firestore";
+import { adminAuth, adminDb } from "@/lib/db/firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 
 export async function GET(req: Request) {
   try {
@@ -12,6 +12,18 @@ export async function GET(req: Request) {
 
     if (!uid || !pondId) {
       return Response.json({ error: "uid dan pondId wajib diberikan" }, { status: 400 });
+    }
+
+    const authHeader = req.headers.get("authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+
+    if (!token) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const decoded = await adminAuth.verifyIdToken(token);
+    if (decoded.uid !== uid) {
+      return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const now = new Date();
@@ -36,7 +48,12 @@ export async function GET(req: Request) {
       startLimit.setHours(0, 0, 0, 0); // fallback today
     }
 
-    const sensorsRef = collection(db, "users", uid, "ponds", pondId, "sensors");
+    const sensorsRef = adminDb
+      .collection("users")
+      .doc(uid)
+      .collection("ponds")
+      .doc(pondId)
+      .collection("sensors");
     
     // Note: Due to Firestore composite index limits, if we haven't created an index, 
     // we might need to filter the date manually if orderBy createdAt and where createdAt > startLimit fails.
@@ -44,14 +61,12 @@ export async function GET(req: Request) {
     // For safety without building composite index immediately, fetch all from a limit or just no-filter and memory filter.
     // Let's use simple where query assuming default indexing works for single inequalities.
 
-    const q = query(
-      sensorsRef,
-      where("createdAt", ">=", Timestamp.fromDate(startLimit)),
-      where("createdAt", "<=", Timestamp.fromDate(endLimit)),
-      orderBy("createdAt", "desc")
-    );
+    const q = sensorsRef
+      .where("createdAt", ">=", Timestamp.fromDate(startLimit))
+      .where("createdAt", "<=", Timestamp.fromDate(endLimit))
+      .orderBy("createdAt", "desc");
 
-    const snapshot = await getDocs(q);
+    const snapshot = await q.get();
 
     const data = snapshot.docs.map(doc => {
       const docData = doc.data();

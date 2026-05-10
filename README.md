@@ -28,6 +28,22 @@ Pastikan Anda memiliki instalasi Node.js pada komputer Anda. Buka terminal pada 
    ```
 3. Buka [http://localhost:3000](http://localhost:3000) pada browser Anda.
 
+## Firebase Security Rules & Data Flow
+Arsitektur data:
+- ESP32 -> POST Next.js API (/api/sensor)
+- RTDB: realtime stream untuk dashboard
+- Firestore: histori dan analytics
+
+Rules sudah disiapkan di:
+- Firestore: [firestore.rules](firestore.rules)
+- RTDB: [database.rules.json](database.rules.json)
+
+Deploy rules (Firebase CLI):
+```bash
+firebase deploy --only firestore:rules
+firebase deploy --only database
+```
+
 ## Cara Build Project
 - disarankan manggunakan pipeline CI/CD agar bisa langsung implementasi CC nya
 - gunakan branch jika ingin update, dan sering sering buka github !
