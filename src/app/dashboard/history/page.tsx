@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth/auth-provider"
 import { Calendar, Download, Filter, Table as TableIcon, Activity } from "lucide-react"
 import { db } from "@/lib/db/firebase"
-import { collection, query, where, orderBy, getDocs, Timestamp, limit } from "firebase/firestore"
+import { collection, query, orderBy, getDocs, limit } from "firebase/firestore"
 
 export default function HistoryPage() {
   const { user, loading } = useAuth()
