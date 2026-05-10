@@ -6,7 +6,7 @@ import { Activity, AlertTriangle, CheckCircle, Droplets, Thermometer, Wind } fro
 import { Button } from "@/components/ui/button"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { useDashboardData } from "./use-dashboard-data"
-import { Monitor, Wifi, AlertCircle } from "lucide-react"
+import { Wifi, AlertCircle } from "lucide-react"
 
 export default function DashboardPage() {
   const {
