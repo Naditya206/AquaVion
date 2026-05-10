@@ -15,8 +15,7 @@ export function Navbar() {
   const links = [
     { href: "/", label: "Beranda" },
     { href: "/features", label: "Fitur" },
-    { href: "/dashboard", label: "Dasbor Pemantauan" },
-    { href: "/dashboard/kolam", label: "Manajemen Kolam" },
+    { href: "/guidebook", label: "Guidebook" },
     { href: "/about", label: "Tentang" },
   ]
 
@@ -52,6 +51,9 @@ export function Navbar() {
           )}
           {!loading && user && (
             <div className="flex items-center gap-3">
+              <Link href="/dashboard" className={cn(buttonVariants({ variant: "outline" }))}>
+                Buka Dasbor
+              </Link>
               {user.photoURL && (
                 <img 
                   src={user.photoURL} 

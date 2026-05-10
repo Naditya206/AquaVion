@@ -1,13 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db/firebase"
 import { collection, doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"
+import { BigQuery } from "@google-cloud/bigquery"
 
+// Initialize BigQuery client using environment variables
+const bqClient = process.env.GOOGLE_CLOUD_PROJECT_ID && process.env.GOOGLE_CLOUD_CLIENT_EMAIL && process.env.GOOGLE_CLOUD_PRIVATE_KEY
+  ? new BigQuery({
+      projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+      credentials: {
+        client_email: process.env.GOOGLE_CLOUD_CLIENT_EMAIL,
+        // Replace escaped newlines with actual newlines
+        private_key: process.env.GOOGLE_CLOUD_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      },
+    })
+  : null;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
     // Validate required fields
-    const { device_id, temperature, ph, turbidity, waterLevel, userId } = body
+    const { device_id, temperature, ph, turbidity, waterLevel: sensorDistance, userId, ssid } = body
     
     if (!device_id) {
       return NextResponse.json({ error: "device_id is required" }, { status: 400 })
@@ -47,10 +59,23 @@ export async function POST(request: NextRequest) {
       }, { status: 404 })
     }
 
-    // Get pond thresholds
+    // Get pond thresholds and dimensions
     const pondDoc = await getDoc(doc(db, "users", ownerId, "ponds", pondId))
     const pondData = pondDoc.data()
     const thresholds = pondData?.thresholds || {}
+    
+    // Hitung Tinggi Air Aktual & Volume Air
+    const pondDepth = pondData?.depth || 100 // Default 100 cm jika belum diset
+    const pondSize = pondData?.size || 0     // Default 0 m2
+    
+    // Jarak sensor ke air dikurangkan dari tinggi total kolam
+    let actualWaterLevel = null
+    let waterVolume = null
+    
+    if (sensorDistance != null) {
+      actualWaterLevel = Math.max(0, pondDepth - sensorDistance) // Cegah nilai minus
+      waterVolume = actualWaterLevel * pondSize * 10 // (cm * m2 * 10 = Liter)
+    }
 
     // Analyze sensor data and generate actions
     const actions: string[] = []
@@ -85,14 +110,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check water level
-    if (waterLevel != null) {
+    // Check water level (menggunakan actualWaterLevel)
+    if (actualWaterLevel != null) {
       const waterLevelMin = thresholds.waterLevelMin || 40
       const waterLevelMax = thresholds.waterLevelMax || 70
-      if (waterLevel < waterLevelMin) {
-        actions.push(`Tinggi Air Terlalu Rendah (${waterLevel} cm) → Tambah air kolam`)
-      } else if (waterLevel > waterLevelMax) {
-        actions.push(`Tinggi Air Terlalu Tinggi (${waterLevel} cm) → Kurangi air kolam`)
+      if (actualWaterLevel < waterLevelMin) {
+        actions.push(`Tinggi Air Terlalu Rendah (${actualWaterLevel.toFixed(1)} cm) → Tambah air kolam`)
+      } else if (actualWaterLevel > waterLevelMax) {
+        actions.push(`Tinggi Air Terlalu Tinggi (${actualWaterLevel.toFixed(1)} cm) → Kurangi air kolam`)
       }
     }
 
@@ -102,12 +127,49 @@ export async function POST(request: NextRequest) {
       temperature: temperature || null,
       ph: ph || null,
       turbidity: turbidity || null,
-      waterLevel: waterLevel || null,
-      water_level: waterLevel || null, // Alias for compatibility
+      waterLevel: actualWaterLevel, // Simpan hasil konversi
+      water_level: actualWaterLevel, // Alias for compatibility
+      rawDistance: sensorDistance || null, // Simpan jarak asli sensor
+      waterVolume: waterVolume,
       actions,
       device_id,
+      ssid: ssid || null,
       createdAt: serverTimestamp(),
     })
+
+    // Update the pond document with the latest SSID to show on dashboard
+    if (ssid) {
+      await setDoc(doc(db, "users", ownerId, "ponds", pondId), {
+        last_ssid: ssid,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
+
+    // [RENCANA B] Sync data to BigQuery if configured
+    if (bqClient) {
+      try {
+        const datasetId = 'aquavion_data';
+        const tableId = 'sensor_logs';
+        const row = {
+          user_id: ownerId,
+          pond_id: pondId,
+          device_id: device_id,
+          temperature: temperature || null,
+          ph: ph || null,
+          turbidity: turbidity || null,
+          water_level: actualWaterLevel,
+          water_volume: waterVolume,
+          actions: actions.join(', ') || null,
+          created_at: BigQuery.timestamp(new Date())
+        };
+        
+        await bqClient.dataset(datasetId).table(tableId).insert([row]);
+        console.log(`Berhasil sinkronisasi data dari ${device_id} ke BigQuery!`);
+      } catch (bqError: any) {
+        console.error("Gagal sinkronisasi ke BigQuery:", bqError?.response?.insertErrors || bqError);
+        // Kita tidak nge-throw error di sini agar Firestore tetap aman
+      }
+    }
 
     // If there are critical actions, trigger notification
     if (actions.length > 0) {
@@ -120,7 +182,7 @@ export async function POST(request: NextRequest) {
           pondId,
           pondName: pondData?.name || "Kolam",
           actions,
-          sensorData: { temperature, ph, turbidity, waterLevel }
+          sensorData: { temperature, ph, turbidity, waterLevel: actualWaterLevel, waterVolume }
         })
       }).catch(err => console.error("Failed to send notification:", err))
     }

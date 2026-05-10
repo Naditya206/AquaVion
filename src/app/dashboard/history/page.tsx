@@ -4,8 +4,9 @@ import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth/auth-provider"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Calendar, Download, Filter, Table as TableIcon, Activity } from "lucide-react"
+import { db } from "@/lib/db/firebase"
+import { collection, query, orderBy, getDocs, limit } from "firebase/firestore"
 
 export default function HistoryPage() {
   const { user, loading } = useAuth()
@@ -17,9 +18,11 @@ export default function HistoryPage() {
   const [endDate, setEndDate] = useState("")
   
   const [data, setData] = useState<any[]>([])
-  const [summary, setSummary] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     if (user && !loading) {
@@ -43,29 +46,90 @@ export default function HistoryPage() {
     setError("");
 
     try {
-      let queryUrl = `/api/history?uid=${user.uid}&pondId=${selectedPondId}&period=${period}`;
-      if (period === "custom") {
-        queryUrl += `&startDate=${startDate}&endDate=${endDate}`;
-      }
+      const now = new Date();
+      let startLimit = new Date();
+      let endLimit = new Date();
       
-      const token = await user.getIdToken();
-      const res = await fetch(queryUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const json = await res.json();
-      
-      if (res.ok) {
-        // Reverse data so it's sorted historically (oldest first for charts)
-        setData(json.data.reverse());
-        setSummary(json.summary);
+      if (period === "today") {
+        startLimit.setHours(0, 0, 0, 0);
+      } else if (period === "7d") {
+        startLimit.setDate(now.getDate() - 7);
+      } else if (period === "30d") {
+        startLimit.setDate(now.getDate() - 30);
+      } else if (period === "custom" && startDate && endDate) {
+        startLimit = new Date(startDate);
+        endLimit = new Date(endDate);
+        endLimit.setHours(23, 59, 59, 999);
       } else {
-        setError(json.error || "Gagal mengambil data");
-        setData([]);
+        startLimit.setHours(0, 0, 0, 0);
       }
-    } catch (err) {
-      setError("Kesalahan jaringan");
+
+      const sensorsRef = collection(db, "users", user.uid, "ponds", selectedPondId, "sensors");
+      
+      // Menggunakan query dasar lalu filter di JS agar tidak butuh Composite Index yang kompleks
+      const q = query(
+        sensorsRef,
+        orderBy("createdAt", "desc"),
+        limit(500)
+      );
+
+      const snapshot = await getDocs(q);
+      
+      const fetchedData = snapshot.docs.map(doc => {
+        const docData = doc.data();
+        const rawDate = docData.createdAt || docData.created_at;
+        let timestamp = "";
+        let dateObj = new Date();
+        
+        if (rawDate && rawDate.toDate) {
+          dateObj = rawDate.toDate();
+          timestamp = dateObj.toISOString();
+        } else if (typeof rawDate === "string") {
+          dateObj = new Date(rawDate);
+          timestamp = rawDate;
+        }
+        
+        return {
+          id: doc.id,
+          suhu: docData.temperature ?? 0,
+          ph_air: docData.ph ?? 0,
+          kekeruhan: docData.turbidity ?? 0,
+          tinggi_air: docData.waterLevel ?? 0,
+          timestamp,
+          dateObj,
+          actions: docData.actions || []
+        };
+      });
+
+      // Filter by Date di memory JS
+      const filteredData = fetchedData.filter(item => {
+        return item.dateObj >= startLimit && item.dateObj <= endLimit;
+      });
+
+      let sumSuhu = 0, sumPh = 0;
+      let minSuhu = Infinity, maxSuhu = -Infinity;
+      let minPh = Infinity, maxPh = -Infinity;
+
+      const formattedData = filteredData.map(item => {
+        const isWarning = item.suhu < 25 || item.suhu > 30 || item.ph_air < 6.5 || item.ph_air > 8.5 || item.kekeruhan > 400 || item.tinggi_air < 40 || item.tinggi_air > 70;
+        const status = isWarning ? "Butuh Tindakan" : "Aman";
+
+        sumSuhu += item.suhu;
+        sumPh += item.ph_air;
+        if (item.suhu < minSuhu) minSuhu = item.suhu;
+        if (item.suhu > maxSuhu) maxSuhu = item.suhu;
+        if (item.ph_air < minPh) minPh = item.ph_air;
+        if (item.ph_air > maxPh) maxPh = item.ph_air;
+
+        return { ...item, status }
+      });
+
+      setData(formattedData.reverse());
+      setCurrentPage(1);
+
+    } catch (err: any) {
+      console.error(err);
+      setError("Kesalahan saat mengambil data riwayat: " + (err.message || "Unknown error"));
     } finally {
       setIsLoading(false);
     }
@@ -77,12 +141,7 @@ export default function HistoryPage() {
     }
   }, [selectedPondId, period, user])
 
-  const chartData = useMemo(() => {
-    return data.map(d => ({
-      time: new Date(d.timestamp).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-      ...d
-    }))
-  }, [data])
+
 
   const exportCSV = () => {
     if (!data.length) return;
@@ -104,6 +163,9 @@ export default function HistoryPage() {
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Memuat...</div>
   if (!user) return <div className="p-8 text-center text-muted-foreground">Anda harus masuk.</div>
+
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -172,68 +234,7 @@ export default function HistoryPage() {
         </div>
       ) : (
         <>
-          {/* Summary Cards */}
-          {summary && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="bg-blue-500/5 border-blue-500/20">
-                <CardContent className="p-4 flex flex-col justify-center text-center space-y-1">
-                   <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Rata-rata Suhu</p>
-                   <h3 className="text-2xl font-bold">{summary.avgSuhu} °C</h3>
-                   <p className="text-xs text-muted-foreground">Min {summary.minSuhu ?? '--'} / Max {summary.maxSuhu ?? '--'}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-cyan-500/5 border-cyan-500/20">
-                <CardContent className="p-4 flex flex-col justify-center text-center space-y-1">
-                   <p className="text-xs font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">Rata-rata pH</p>
-                   <h3 className="text-2xl font-bold">{summary.avgPh}</h3>
-                   <p className="text-xs text-muted-foreground">Min {summary.minPh ?? '--'} / Max {summary.maxPh ?? '--'}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-emerald-500/5 border-emerald-500/20">
-                 <CardContent className="p-4 flex flex-col justify-center text-center space-y-1">
-                   <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide">Status Umum</p>
-                   <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">Aman</h3>
-                   <p className="text-xs text-muted-foreground">{summary.totalData} Data Terkumpul</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-indigo-500/5 border-indigo-500/20">
-                 <CardContent className="p-4 flex flex-col justify-center text-center space-y-1">
-                   <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Total Insiden</p>
-                   <h3 className="text-2xl font-bold">{data.filter(d => d.status === "Butuh Tindakan").length}</h3>
-                   <p className="text-xs text-muted-foreground">Membutuhkan intervensi</p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
 
-          {/* Chart Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Grafik Kualitas Air</CardTitle>
-              <CardDescription>Tren sensor dari waktu ke waktu berdasarkan rentang waktu yang dipilih.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80 w-full min-w-0">
-                {chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                    <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.2} />
-                      <XAxis dataKey="time" stroke="#888888" fontSize={11} tickLine={false} axisLine={false} tickMargin={10} />
-                      <YAxis stroke="#888888" fontSize={11} tickLine={false} axisLine={false} tickMargin={10} />
-                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }} />
-                      <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                      <Line type="monotone" dataKey="suhu" name="Suhu (°C)" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="ph_air" name="pH" stroke="#06b6d4" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="kekeruhan" name="Kekeruhan" stroke="#6366f1" strokeWidth={2} dot={false} />
-                      <Line type="monotone" dataKey="tinggi_air" name="Tinggi Air" stroke="#f59e0b" strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex h-full items-center justify-center text-muted-foreground">Tidak ada data untuk grafik</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Table Data */}
           <Card>
@@ -254,8 +255,8 @@ export default function HistoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.length > 0 ? (
-                      data.map((row) => (
+                    {paginatedData.length > 0 ? (
+                      paginatedData.map((row) => (
                         <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
                           <td className="px-4 py-3 whitespace-nowrap">{new Date(row.timestamp).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}</td>
                           <td className="px-4 py-3 font-medium">{row.suhu}</td>
@@ -277,6 +278,33 @@ export default function HistoryPage() {
                   </tbody>
                 </table>
               </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4">
+                  <span className="text-sm text-muted-foreground">
+                    Menampilkan halaman {currentPage} dari {totalPages}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Sebelumnya
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Selanjutnya
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </>
