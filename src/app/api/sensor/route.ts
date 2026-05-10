@@ -122,8 +122,8 @@ export async function POST(req: Request) {
           pondName = pondData.name;
         }
 
-        const config = settingsSnap.data();
-        if (settingsSnap.exists && config) {
+        const config = settingsSnap.data() || {};
+        if (settingsSnap.exists) {
           if (config.telegramEnabled && config.botToken && config.chatId) {
             const message = `🚨 *PERINGATAN AQUAVION*\nTarget: *${pondName}*\n\nKondisi terdeteksi:\n` + actions.map((a: string) => `• ${a}`).join("\n");
             
