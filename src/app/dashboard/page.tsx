@@ -61,38 +61,6 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-          <div className="rounded-xl border bg-card/40 p-3">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-              <div className="flex-1">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pilih Kolam</label>
-                  {pondsLoading ? <span className="text-xs text-muted-foreground">Memuat...</span> : null}
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {ponds.length === 0 ? (
-                    <span className="text-sm text-muted-foreground">Belum ada kolam.</span>
-                  ) : (
-                    ponds.map((pond) => {
-                      const isActive = pond.id === selectedPondId
-
-                      return (
-                        <Button
-                          key={pond.id}
-                          type="button"
-                          variant={isActive ? "default" : "outline"}
-                          className="h-auto min-w-44 justify-start px-3 py-2 text-left"
-                          onClick={() => handlePondChange(pond.id)}
-                        >
-                          <span className="block">
-                            <span className="block text-sm font-semibold">{pond.name || `Kolam ${pond.id.slice(0, 6)}`}</span>
-                            <span className="block text-xs opacity-80">{pond.location || "Lokasi belum diisi"}</span>
-                          </span>
-                        </Button>
-                      )
-                    })
-                  )}
-                </div>
-          <p className="text-sm md:text-base text-muted-foreground">{headerSubtitle}</p>
           <div className="rounded-xl border bg-card p-4 md:p-5 flex flex-col md:flex-row md:items-stretch justify-between gap-6 shadow-sm">
             <div className="flex-1">
               <div className="mb-3 flex items-center justify-between gap-3">
@@ -156,12 +124,6 @@ export default function DashboardPage() {
             </span>
             <span className="text-xs md:text-sm font-medium">Sistem Daring</span>
           </div>
-        <div className="flex items-center gap-2 bg-card px-3 py-1.5 md:px-4 md:py-2 border rounded-full shadow-sm">
-          <span className="relative flex h-2 w-2 md:h-3 md:w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-green-500"></span>
-          </span>
-          <span className="text-xs md:text-sm font-medium">Sistem Daring</span>
         </div>
       </div>
 
