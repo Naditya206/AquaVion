@@ -4,10 +4,9 @@ import { useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, AlertTriangle, CheckCircle, Clock, Droplets, Thermometer, Wind } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { useDashboardData } from "./use-dashboard-data"
-import { useWebSerial } from "@/hooks/use-web-serial"
-import { Monitor, Wifi, WifiOff } from "lucide-react"
+import { Wifi, AlertCircle } from "lucide-react"
 
 export default function DashboardPage() {
   const {
@@ -24,33 +23,14 @@ export default function DashboardPage() {
     chartData,
   } = useDashboardData()
 
-  const { isConnected, data: serialData, error: serialError, connect: connectSerial, disconnect: disconnectSerial, setSyncPond } = useWebSerial()
-
   // Update sync config when pond selection changes
-  useEffect(() => {
-    if (selectedPondId && user?.uid) {
-      const selectedPond = ponds.find(p => p.id === selectedPondId)
-      if (selectedPond) {
-        setSyncPond({
-          pondId: selectedPondId,
-          userId: user.uid,
-          deviceId: selectedPond.device_id || "UNKNOWN"
-        })
-      }
-    } else {
-      setSyncPond(null)
-    }
-  }, [selectedPondId, ponds, user, setSyncPond])
+  // USB Serial logic removed as requested
 
-  // Use serial data if connected, otherwise use database data
-  const activeSensor = isConnected ? {
-    temperature: serialData.temperature ?? latestSensor?.temperature,
-    ph: serialData.ph ?? latestSensor?.ph,
-    turbidity: serialData.turbidity ?? latestSensor?.turbidity,
-    waterLevel: serialData.waterLevel ?? latestSensor?.waterLevel,
-    actions: latestSensor?.actions, // Keep AI actions from DB
-    createdAt: new Date().toISOString() // Show current time when streaming
-  } : latestSensor
+  // Use database data
+  const activeSensor = latestSensor
+  
+  const selectedPond = ponds.find((pond) => pond.id === selectedPondId)
+  const connectedSSID = selectedPond?.last_ssid || "Tidak diketahui"
 
   const headerSubtitle = useMemo(() => {
     const selectedPond = ponds.find((pond) => pond.id === selectedPondId)
@@ -112,38 +92,60 @@ export default function DashboardPage() {
                     })
                   )}
                 </div>
+          <p className="text-sm md:text-base text-muted-foreground">{headerSubtitle}</p>
+          <div className="rounded-xl border bg-card p-4 md:p-5 flex flex-col md:flex-row md:items-stretch justify-between gap-6 shadow-sm">
+            <div className="flex-1">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pilih Kolam</label>
+                {pondsLoading ? <span className="text-xs text-muted-foreground animate-pulse">Memuat...</span> : null}
               </div>
-              
-              {/* USB Serial Toggle */}
-              <div className="flex flex-col gap-2 p-3 bg-muted/30 rounded-lg border min-w-[240px]">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 font-semibold text-xs">
-                    <Monitor className="h-3.5 w-3.5 text-primary" />
-                    Monitor USB (COM7)
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant={isConnected ? "destructive" : "outline"}
-                    className="h-7 text-[10px] px-2"
-                    onClick={isConnected ? disconnectSerial : connectSerial}
-                  >
-                    {isConnected ? <><WifiOff className="mr-1 h-3 w-3" /> Putus</> : <><Wifi className="mr-1 h-3 w-3" /> Connect</>}
-                  </Button>
-                </div>
-                {isConnected ? (
-                  <div className="text-[10px] text-green-500 font-medium animate-pulse flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                    Live Streaming dari Serial Port
-                  </div>
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                {ponds.length === 0 ? (
+                  <span className="text-sm text-muted-foreground italic">Belum ada kolam.</span>
                 ) : (
-                  <div className="text-[10px] text-muted-foreground italic">
-                    Gunakan USB jika alat tidak terconnect WiFi
-                  </div>
+                  ponds.map((pond) => {
+                    const isActive = pond.id === selectedPondId
+
+                    return (
+                      <Button
+                        key={pond.id}
+                        type="button"
+                        variant={isActive ? "default" : "outline"}
+                        className="h-auto min-w-[180px] justify-start px-3 py-2.5 text-left transition-all"
+                        onClick={() => handlePondChange(pond.id)}
+                      >
+                        <span className="block">
+                          <span className="block text-sm font-semibold">{pond.name || `Kolam ${pond.id.slice(0, 6)}`}</span>
+                          <span className="block text-xs opacity-80 mt-0.5">{pond.location || "Lokasi belum diisi"}</span>
+                        </span>
+                      </Button>
+                    )
+                  })
                 )}
-                {serialError && <div className="text-[9px] text-red-500 leading-tight">Error: {serialError}</div>}
+              </div>
+              {pondsError ? <span className="mt-2 block text-xs text-destructive">{pondsError}</span> : null}
+            </div>
+            
+            {/* Vertical Divider */}
+            <div className="hidden md:block w-px bg-border"></div>
+            <div className="md:hidden h-px w-full bg-border"></div>
+            
+            {/* Dynamic WiFi Indicator */}
+            <div className="flex-1 md:max-w-[320px] flex flex-col justify-center">
+              <div className="flex items-center gap-2 font-semibold text-sm text-primary mb-3">
+                <Wifi className="h-4 w-4" />
+                Koneksi Jaringan Alat
+              </div>
+              <div className="text-sm font-medium flex items-center gap-2 mb-3">
+                SSID: <span className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-mono text-xs">{connectedSSID}</span>
+              </div>
+              <div className="p-2.5 rounded-md bg-amber-500/10 border border-amber-500/20">
+                <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-start gap-1.5 leading-tight">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span>Pastikan laptop/HP Anda terhubung ke jaringan WiFi yang sama untuk sinkronisasi optimal.</span>
+                </div>
               </div>
             </div>
-            {pondsError ? <span className="mt-2 block text-xs text-destructive">{pondsError}</span> : null}
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
@@ -154,6 +156,12 @@ export default function DashboardPage() {
             </span>
             <span className="text-xs md:text-sm font-medium">Sistem Daring</span>
           </div>
+        <div className="flex items-center gap-2 bg-card px-3 py-1.5 md:px-4 md:py-2 border rounded-full shadow-sm">
+          <span className="relative flex h-2 w-2 md:h-3 md:w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-green-500"></span>
+          </span>
+          <span className="text-xs md:text-sm font-medium">Sistem Daring</span>
         </div>
       </div>
 
@@ -247,8 +255,13 @@ export default function DashboardPage() {
             <Droplets className={`h-3 w-3 md:h-4 md:w-4 ${activeSensor?.waterLevel && (activeSensor.waterLevel < 40 || activeSensor.waterLevel > 70) ? 'text-red-500' : 'text-amber-500'}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-xl md:text-2xl font-bold">
+            <div className="text-xl md:text-2xl font-bold flex items-baseline gap-2 flex-wrap">
               {activeSensor?.waterLevel != null ? `${activeSensor.waterLevel} cm` : "--"}
+              {activeSensor?.waterVolume != null && (
+                <span className="text-sm font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border/50" title="Volume Air Aktual">
+                  {Math.round(activeSensor.waterVolume).toLocaleString("id-ID")} L
+                </span>
+              )}
             </div>
             <div className="flex items-center justify-between mt-1">
               <p className="text-[10px] md:text-xs flex items-center">
@@ -270,10 +283,50 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
 
-        {/* Action Recomendation Panel */}
-        <div className="space-y-6 md:space-y-8">
+        {/* Charts Panel (2 Columns) */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="h-full">
+            <CardHeader className="pb-2 border-b">
+              <CardTitle>Riwayat Sensor Keseluruhan</CardTitle>
+              <CardDescription>Pergerakan 4 parameter kualitas air secara real-time</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {chartData.length > 0 ? (
+                <div className="h-[450px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
+                      <XAxis dataKey="time" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={10} />
+                      
+                      {/* Sumbu Y Kiri untuk pH, Suhu, Tinggi Air */}
+                      <YAxis yAxisId="left" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={10} />
+                      
+                      {/* Sumbu Y Kanan khusus untuk Kekeruhan (karena nilainya bisa 0-1000) */}
+                      <YAxis yAxisId="right" orientation="right" domain={[0, 'auto']} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={10} />
+                      
+                      <Tooltip contentStyle={{ borderRadius: '8px', backgroundColor: 'rgba(255, 255, 255, 0.9)', color: '#000', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                      <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', paddingBottom: '20px' }} />
+                      
+                      <Line yAxisId="left" type="monotone" dataKey="temp" name="Suhu (°C)" stroke="#ef4444" strokeWidth={2.5} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
+                      <Line yAxisId="left" type="monotone" dataKey="ph" name="pH" stroke="#06b6d4" strokeWidth={2.5} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
+                      <Line yAxisId="left" type="monotone" dataKey="waterLevel" name="Tinggi Air (cm)" stroke="#f59e0b" strokeWidth={2.5} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
+                      
+                      {/* Kekeruhan pakai sumbu kanan */}
+                      <Line yAxisId="right" type="monotone" dataKey="turbidity" name="Kekeruhan (NTU)" stroke="#6366f1" strokeWidth={2.5} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[450px] flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">Belum ada data riwayat sensor</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Action Recomendation Panel (1 Column) */}
+        <div className="lg:col-span-1 space-y-6 md:space-y-8">
           <Card className={activeSensor?.actions && activeSensor.actions.length > 0 ? "border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]" : "border-green-500"}>
             <CardHeader className={activeSensor?.actions && activeSensor.actions.length > 0 ? "bg-red-500/10 rounded-t-xl" : "bg-green-500/10 rounded-t-xl"}>
               <CardTitle className="flex items-center gap-2">
@@ -308,9 +361,8 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
-          
-
         </div>
+
       </div>
     </div>
   )

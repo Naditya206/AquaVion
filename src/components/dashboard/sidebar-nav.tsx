@@ -2,16 +2,17 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, History, Settings, User, Droplets } from "lucide-react"
+import { LayoutDashboard, History, Settings, User, Droplets, BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/dashboard/history", icon: History, label: "History" },
-  { href: "/dashboard/kolam", icon: Droplets, label: "Kolam" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
-  { href: "/dashboard/profile", icon: User, label: "Profile" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dasbor" },
+  { href: "/dashboard/history", icon: History, label: "Riwayat" },
+  { href: "/dashboard/kolam", icon: Droplets, label: "Manajemen Kolam" },
+  { href: "/dashboard/guide", icon: BookOpen, label: "Panduan Air" },
+  { href: "/dashboard/settings", icon: Settings, label: "Pengaturan" },
+  { href: "/dashboard/profile", icon: User, label: "Profil" },
 ]
 
 export function SidebarNav() {
@@ -35,8 +36,8 @@ export function SidebarNav() {
               "justify-start"
             )}
           >
-            <Icon className="mr-2 h-4 w-4" />
-            {item.label}
+            <Icon className="mr-3 h-5 w-5" />
+            <span className="text-sm font-medium">{item.label}</span>
           </Link>
         )
       })}

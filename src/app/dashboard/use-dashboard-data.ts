@@ -13,6 +13,7 @@ type Pond = {
   name: string
   location: string
   device_id: string
+  last_ssid?: string
   created_at?: string
 }
 
@@ -22,6 +23,7 @@ type SensorRecord = {
   temperature?: number
   turbidity?: number
   waterLevel?: number
+  waterVolume?: number
   actions?: string[]
   createdAt?: string
 }
@@ -129,6 +131,7 @@ export function useDashboardData() {
               name: data.name ?? "",
               location: data.location ?? "",
               device_id: data.device_id ?? "",
+              last_ssid: data.last_ssid ?? "",
               created_at: createdAt,
             }
           })
@@ -177,6 +180,7 @@ export function useDashboardData() {
               temperature: data.temperature ?? null,
               turbidity: data.turbidity ?? null,
               waterLevel: data.waterLevel ?? data.water_level ?? null,
+              waterVolume: data.waterVolume ?? data.water_volume ?? null,
               actions: data.actions ?? [],
               createdAt,
             }
