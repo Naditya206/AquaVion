@@ -8,7 +8,7 @@ import { Bell, Send, Sliders, Save, Database } from "lucide-react"
 
 export default function SettingsPage() {
   const { user, loading } = useAuth()
-  
+
   // Available Ponds cache locally to avoid rewriting usePonds context logic here if not exported
   const [ponds, setPonds] = useState<any[]>([])
   const [selectedPondId, setSelectedPondId] = useState("")
@@ -43,17 +43,17 @@ export default function SettingsPage() {
           getDocs(collection(db, "users", user.uid, "ponds")).then((snap) => {
             const fetchedPonds = snap.docs.map(d => ({ id: d.id, name: d.data().name }));
             setPonds(fetchedPonds);
-            
+
             let initialPondId = "";
             if (typeof window !== "undefined") {
               initialPondId = window.localStorage.getItem("selectedPondId") || "";
             }
             if (!initialPondId && fetchedPonds.length > 0) initialPondId = fetchedPonds[0].id;
-            
+
             setSelectedPondId(initialPondId);
 
             // Fetch Settings
-            fetch(`/api/settings?uid=${user.uid}${initialPondId ? '&pondId='+initialPondId : ''}`)
+            fetch(`/api/settings?uid=${user.uid}${initialPondId ? '&pondId=' + initialPondId : ''}`)
               .then(res => res.json())
               .then(data => {
                 if (data.global) setGlobalSettings(data.global);
@@ -121,7 +121,7 @@ export default function SettingsPage() {
   }
 
   const [isSimulating, setIsSimulating] = useState(false)
-  
+
   const handleTestTelegram = async () => {
     if (!user) return;
     setIsSimulating(true);
@@ -135,9 +135,9 @@ export default function SettingsPage() {
         setMessage({ type: "error", text: data.error || "Gagal memulai simulasi" });
       }
     } catch (error) {
-       setMessage({ type: "error", text: "Terjadi masalah saat mengakses API simulasi" });
+      setMessage({ type: "error", text: "Terjadi masalah saat mengakses API simulasi" });
     } finally {
-       setIsSimulating(false);
+      setIsSimulating(false);
     }
   }
 
@@ -153,32 +153,32 @@ export default function SettingsPage() {
   }
 
   const handlePushToggle = async (checked: boolean) => {
-    setGlobalSettings({...globalSettings, webPushEnabled: checked});
+    setGlobalSettings({ ...globalSettings, webPushEnabled: checked });
     if (checked && 'serviceWorker' in navigator && 'PushManager' in window && user) {
       try {
         const swReg = await navigator.serviceWorker.register('/sw.js');
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-           const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-           if (!vapidPublicKey) {
-              setMessage({ type: "error", text: "VAPID Public Key belum disetel di .env.local" });
-              return;
-           }
-           setMessage({ type: "", text: "Mendaftarkan perangkat Anda ke Web Push..." });
-           const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
-           const subscription = await swReg.pushManager.subscribe({
-             userVisibleOnly: true,
-             applicationServerKey: convertedVapidKey
-           });
-           await fetch('/api/web-push/save', {
-             method: 'POST',
-             headers: {'Content-Type':'application/json'},
-             body: JSON.stringify({ uid: user.uid, subscription })
-           });
-           setMessage({ type: "success", text: "Perangkat ini sukses berlangganan Push Notification!" });
+          const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+          if (!vapidPublicKey) {
+            setMessage({ type: "error", text: "VAPID Public Key belum disetel di .env.local" });
+            return;
+          }
+          setMessage({ type: "", text: "Mendaftarkan perangkat Anda ke Web Push..." });
+          const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+          const subscription = await swReg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: convertedVapidKey
+          });
+          await fetch('/api/web-push/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: user.uid, subscription })
+          });
+          setMessage({ type: "success", text: "Perangkat ini sukses berlangganan Push Notification!" });
         } else {
-           setMessage({ type: "error", text: "Izin notifikasi diblokir oleh browser Anda." });
-           setGlobalSettings({...globalSettings, webPushEnabled: false});
+          setMessage({ type: "error", text: "Izin notifikasi diblokir oleh browser Anda." });
+          setGlobalSettings({ ...globalSettings, webPushEnabled: false });
         }
       } catch (err) {
         console.error("Gagal mendaftar push", err);
@@ -206,7 +206,7 @@ export default function SettingsPage() {
 
       {/* TABS Equivalent layout */}
       <div className="grid gap-8">
-        
+
         {/* POND THRESHOLD SETTINGS */}
         <Card className="border-primary/20">
           <form onSubmit={handlePondSubmit}>
@@ -233,42 +233,42 @@ export default function SettingsPage() {
                 <div className="space-y-4 p-4 rounded-lg border bg-muted/20">
                   <h4 className="font-medium text-sm flex items-center gap-2">🛠️ Suhu Air (°C)</h4>
                   <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                       <label className="text-xs text-muted-foreground">Minimal</label>
-                       <input type="number" step="0.1" value={pondSettings.batas_min_suhu} onChange={e => setPondSettings({...pondSettings, batas_min_suhu: Number(e.target.value)})} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
-                     </div>
-                     <div className="space-y-2">
-                       <label className="text-xs text-muted-foreground">Maksimal</label>
-                       <input type="number" step="0.1" value={pondSettings.batas_max_suhu} onChange={e => setPondSettings({...pondSettings, batas_max_suhu: Number(e.target.value)})} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
-                     </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">Minimal</label>
+                      <input type="number" step="0.1" value={pondSettings.batas_min_suhu} onChange={e => setPondSettings({ ...pondSettings, batas_min_suhu: Number(e.target.value) })} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">Maksimal</label>
+                      <input type="number" step="0.1" value={pondSettings.batas_max_suhu} onChange={e => setPondSettings({ ...pondSettings, batas_max_suhu: Number(e.target.value) })} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-4 p-4 rounded-lg border bg-muted/20">
                   <h4 className="font-medium text-sm flex items-center gap-2">🛠️ Keasaman (pH)</h4>
                   <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                       <label className="text-xs text-muted-foreground">Minimal</label>
-                       <input type="number" step="0.1" value={pondSettings.batas_min_ph} onChange={e => setPondSettings({...pondSettings, batas_min_ph: Number(e.target.value)})} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
-                     </div>
-                     <div className="space-y-2">
-                       <label className="text-xs text-muted-foreground">Maksimal</label>
-                       <input type="number" step="0.1" value={pondSettings.batas_max_ph} onChange={e => setPondSettings({...pondSettings, batas_max_ph: Number(e.target.value)})} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
-                     </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">Minimal</label>
+                      <input type="number" step="0.1" value={pondSettings.batas_min_ph} onChange={e => setPondSettings({ ...pondSettings, batas_min_ph: Number(e.target.value) })} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">Maksimal</label>
+                      <input type="number" step="0.1" value={pondSettings.batas_max_ph} onChange={e => setPondSettings({ ...pondSettings, batas_max_ph: Number(e.target.value) })} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-4 p-4 rounded-lg border bg-muted/20">
                   <h4 className="font-medium text-sm flex items-center gap-2">🛠️ Tinggi Air (cm)</h4>
                   <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                       <label className="text-xs text-muted-foreground">Minimal</label>
-                       <input type="number" step="1" value={pondSettings.batas_min_air} onChange={e => setPondSettings({...pondSettings, batas_min_air: Number(e.target.value)})} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
-                     </div>
-                     <div className="space-y-2">
-                       <label className="text-xs text-muted-foreground">Maksimal</label>
-                       <input type="number" step="1" value={pondSettings.batas_max_air} onChange={e => setPondSettings({...pondSettings, batas_max_air: Number(e.target.value)})} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
-                     </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">Minimal</label>
+                      <input type="number" step="1" value={pondSettings.batas_min_air} onChange={e => setPondSettings({ ...pondSettings, batas_min_air: Number(e.target.value) })} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">Maksimal</label>
+                      <input type="number" step="1" value={pondSettings.batas_max_air} onChange={e => setPondSettings({ ...pondSettings, batas_max_air: Number(e.target.value) })} className="w-full h-9 rounded-md border border-input px-3 py-1 text-sm bg-background" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -309,19 +309,19 @@ export default function SettingsPage() {
                   <p className="text-sm text-muted-foreground">Kirim log insiden ke bot Telegram Anda.</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" checked={globalSettings.telegramEnabled} onChange={e => setGlobalSettings({...globalSettings, telegramEnabled: e.target.checked})} />
+                  <input type="checkbox" className="sr-only peer" checked={globalSettings.telegramEnabled} onChange={e => setGlobalSettings({ ...globalSettings, telegramEnabled: e.target.checked })} />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                 </label>
               </div>
 
               {globalSettings.telegramEnabled && (
                 <div className="p-4 border rounded-lg bg-sky-50 dark:bg-sky-950/20 space-y-4">
-                   <div className="grid gap-2">
+                  <div className="grid gap-2">
                     <label className="text-sm font-medium">Telegram Bot Token</label>
                     <input
                       type="password"
                       value={globalSettings.botToken}
-                      onChange={(e) => setGlobalSettings({...globalSettings, botToken: e.target.value})}
+                      onChange={(e) => setGlobalSettings({ ...globalSettings, botToken: e.target.value })}
                       placeholder="Contoh: 123456789:ABCdefGHIjkl..."
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus:ring-2 focus:ring-sky-500"
                     />
@@ -331,25 +331,25 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       value={globalSettings.chatId}
-                      onChange={(e) => setGlobalSettings({...globalSettings, chatId: e.target.value})}
+                      onChange={(e) => setGlobalSettings({ ...globalSettings, chatId: e.target.value })}
                       placeholder="Contoh: 987654321"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus:ring-2 focus:ring-sky-500"
                     />
                   </div>
-                  <Button type="button" variant="outline" size="sm" onClick={handleTestTelegram} disabled={isSimulating} className="mt-2 text-sky-600 border-sky-200 hover:bg-sky-100 dark:text-sky-400 dark:border-sky-800 dark:hover:bg-sky-900">
+                  {/* <Button type="button" variant="outline" size="sm" onClick={handleTestTelegram} disabled={isSimulating} className="mt-2 text-sky-600 border-sky-200 hover:bg-sky-100 dark:text-sky-400 dark:border-sky-800 dark:hover:bg-sky-900">
                     {isSimulating ? (
                       <>Menyiapkan Simulasi Iot...</>
                     ) : (
                       <><Send className="h-3 w-3 mr-2" /> Jalankan Simulasi 3 Kolam</>
                     )}
-                  </Button>
+                  </Button> */}
                 </div>
               )}
             </CardContent>
             <CardFooter>
-               <Button type="submit" disabled={savingGlobal}>
-                  <Save className="h-4 w-4 mr-2" /> {savingGlobal ? "Menyimpan..." : "Simpan Preferensi"}
-                </Button>
+              <Button type="submit" disabled={savingGlobal}>
+                <Save className="h-4 w-4 mr-2" /> {savingGlobal ? "Menyimpan..." : "Simpan Preferensi"}
+              </Button>
             </CardFooter>
           </form>
         </Card>

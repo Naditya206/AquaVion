@@ -74,10 +74,9 @@ function LoginForm() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      router.replace(redirectTo)
+      // Redirect handled by useEffect
     } catch (err) {
       setError(getErrorCopy(err))
-    } finally {
       setSubmitting(false)
     }
   }
@@ -87,15 +86,28 @@ function LoginForm() {
     setSubmitting(true)
     try {
       await signInWithGoogle()
-      router.replace(redirectTo)
+      // Redirect handled by useEffect
     } catch (err) {
       setError({
         title: "Gagal masuk dengan Google",
         message: "Terjadi kendala saat masuk dengan Google. Coba lagi.",
       })
-    } finally {
       setSubmitting(false)
     }
+  }
+
+  if (user) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-6 pb-8 flex flex-col items-center text-center gap-4">
+          <div className="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <div className="space-y-1">
+            <h3 className="font-semibold text-lg">Sudah Masuk</h3>
+            <p className="text-sm text-muted-foreground">Mengalihkan Anda ke dasbor...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
