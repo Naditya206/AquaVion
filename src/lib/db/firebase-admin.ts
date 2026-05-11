@@ -9,19 +9,20 @@ const parseServiceAccount = (value: string) => {
   const trimmed = value.trim();
 
   try {
+    let parsed: any;
+    
     // Support base64-encoded JSON to avoid newline issues in env files.
     if (!trimmed.startsWith("{")) {
       const decoded = Buffer.from(trimmed, "base64").toString("utf8");
-      return JSON.parse(decoded);
-    }
-
-    let parsed: any;
-    try {
-      parsed = JSON.parse(trimmed);
-    } catch {
-      // Handle raw newlines inside the JSON string (invalid JSON as-is).
-      const repaired = trimmed.replace(/\n/g, "\\n");
-      parsed = JSON.parse(repaired);
+      parsed = JSON.parse(decoded);
+    } else {
+      try {
+        parsed = JSON.parse(trimmed);
+      } catch {
+        // Handle raw newlines inside the JSON string (invalid JSON as-is).
+        const repaired = trimmed.replace(/\n/g, "\\n");
+        parsed = JSON.parse(repaired);
+      }
     }
 
     if (parsed && parsed.private_key) {
