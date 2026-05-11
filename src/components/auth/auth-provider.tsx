@@ -35,23 +35,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Faster timeout for auth check
-    const authTimeout = setTimeout(() => {
-      if (loading) {
-        setLoading(false)
-      }
-    }, 3000)
-
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser)
       setAuthCookie(currentUser?.uid ?? null)
       setLoading(false)
-      clearTimeout(authTimeout)
     })
 
     return () => {
       unsubscribe()
-      clearTimeout(authTimeout)
     }
   }, [])
 
