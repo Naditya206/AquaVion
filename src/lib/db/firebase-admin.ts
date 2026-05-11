@@ -15,13 +15,21 @@ const parseServiceAccount = (value: string) => {
       return JSON.parse(decoded);
     }
 
+    let parsed: any;
     try {
-      return JSON.parse(trimmed.replace(/\\n/g, "\n"));
+      parsed = JSON.parse(trimmed);
     } catch {
       // Handle raw newlines inside the JSON string (invalid JSON as-is).
       const repaired = trimmed.replace(/\n/g, "\\n");
-      return JSON.parse(repaired);
+      parsed = JSON.parse(repaired);
     }
+
+    if (parsed && parsed.private_key) {
+      // Ensure literal \n strings are converted to actual newlines for PEM format
+      parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
+    }
+
+    return parsed;
   } catch (error) {
     console.error("Firebase Admin Initialization Warning: Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY.", error);
     return null;
