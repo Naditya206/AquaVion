@@ -46,13 +46,13 @@ const parsedKey = serviceAccountJson ? parseServiceAccount(serviceAccountJson) :
 const app = getApps().length
   ? getApps()[0]
   : initializeApp(
-      parsedKey
-        ? {
-            credential: cert(parsedKey),
-            databaseURL: databaseUrl,
-          }
-        : { databaseURL: databaseUrl }
-    );
+    parsedKey
+      ? {
+        credential: cert(parsedKey),
+        databaseURL: databaseUrl,
+      }
+      : { databaseURL: databaseUrl }
+  );
 
 const adminAuth = getAuth(app);
 const adminDb = getFirestore(app);
