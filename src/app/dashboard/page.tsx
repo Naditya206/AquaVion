@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, AlertTriangle, CheckCircle, Droplets, Thermometer, Wind } from "lucide-react"
+import { Activity, AlertTriangle, CheckCircle, Clock, Droplets, Thermometer, Wind } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useDashboardData } from "./use-dashboard-data"
@@ -146,16 +146,25 @@ export default function DashboardPage() {
             </span>
             <span className="text-xs md:text-sm font-medium">Sistem Daring</span>
           </div>
-          <div className="text-[10px] md:text-xs text-muted-foreground font-medium pr-1 text-right">
-            Terakhir update:<br className="md:hidden" /> {activeSensor?.createdAt ? new Intl.DateTimeFormat("id-ID", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit"
-            }).format(new Date(activeSensor.createdAt)).replace(/\./g, ':') : "Belum ada data"}
-          </div>
+          {activeSensor?.createdAt && (
+            <div className="flex items-center gap-2.5 px-3 py-2 bg-primary/5 text-primary rounded-xl border border-primary/20 shadow-sm group hover:bg-primary/10 transition-colors">
+              <div className="p-1.5 bg-primary/10 rounded-lg">
+                <Clock className="h-3.5 w-3.5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] uppercase font-bold tracking-widest opacity-60 leading-none mb-0.5">Deteksi Terakhir</span>
+                <span className="text-[11px] md:text-xs font-bold tabular-nums">
+                  {new Intl.DateTimeFormat("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit"
+                  }).format(new Date(activeSensor.createdAt)).replace(/\./g, ':')}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
