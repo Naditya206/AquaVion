@@ -1,6 +1,8 @@
 import { adminDb, adminRtdb } from "@/lib/db/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
