@@ -1,5 +1,5 @@
 import { adminDb, adminRtdb } from "@/lib/db/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
@@ -40,26 +40,35 @@ export async function GET(req: Request) {
 
     return Response.json({ sensors });
   } catch (err: any) {
+    console.error("[GET /api/sensor] Error:", err);
     return Response.json({ error: "Failed to fetch data: " + err.message }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
+  let uid: string | null = null;
+  let pondId: string | null = null;
+  
   try {
     const body = await req.json();
+    console.log("[POST /api/sensor] Received payload:", JSON.stringify(body));
 
     // Mapping payload dari ESP32 jika berbeda
-    const uid = body.uid || body.userId;
-    const pondId = body.pond_id || body.pondId;
+    uid = body.uid || body.userId;
+    pondId = body.pond_id || body.pondId;
     const ph = body.ph_air || body.ph;
     const turbidity = body.kekeruhan || body.turbidity;
     const temperature = body.suhu || body.temperature;
     const waterLevel = body.tinggi_air || body.waterLevel;
 
     if (!uid || !pondId) {
+      console.warn("[POST /api/sensor] Missing required fields: uid or pondId");
       return Response.json({ error: "uid/userId dan pond_id/pondId wajib" }, { status: 400 });
     }
 
+    console.log(`[POST /api/sensor] Processing data for uid=${uid}, pondId=${pondId}`);
+
+    // Evaluasi kondisi dan action items
     const actions: string[] = [];
     if (ph !== undefined && ph !== null) {
       if (ph < 6.5) actions.push("Air Terlalu Asam → Taburkan kapur dolomit");
@@ -80,9 +89,7 @@ export async function POST(req: Request) {
       if (turbidity > 400) actions.push("Air Kotor → Siphon / drainase / probiotik");
     }
 
-    const dbRef = adminRtdb.ref(`sensors/${uid}/${pondId}/readings`);
     const nowISO = new Date().toISOString();
-
     const payload = {
       ph: ph ?? null,
       turbidity: turbidity ?? null,
@@ -94,89 +101,158 @@ export async function POST(req: Request) {
 
     let rtdbOk = false;
     let firestoreOk = false;
+    let latestOk = false;
 
-    const newRef = dbRef.push();
-    await newRef.set(payload);
-    rtdbOk = true;
+    // 1. WRITE TO RTDB - readings
+    try {
+      const dbRef = adminRtdb.ref(`sensors/${uid}/${pondId}/readings`);
+      const newRef = dbRef.push();
+      await newRef.set(payload);
+      rtdbOk = true;
+      console.log(`[POST /api/sensor] ✅ RTDB readings written: sensors/${uid}/${pondId}/readings`);
+    } catch (rtdbErr: any) {
+      console.error(`[POST /api/sensor] ❌ RTDB readings failed:`, rtdbErr.message);
+      throw new Error(`RTDB readings write failed: ${rtdbErr.message}`);
+    }
 
-    // Simpan histori permanen ke Firestore
-    await adminDb.collection("users").doc(uid).collection("ponds").doc(pondId).collection("sensors").add({
-      ...payload,
-      createdAt: FieldValue.serverTimestamp(),
-      source: "iot",
-    });
-    firestoreOk = true;
+    // 2. WRITE TO FIRESTORE - sensors history
+    try {
+      await adminDb
+        .collection("users")
+        .doc(uid)
+        .collection("ponds")
+        .doc(pondId)
+        .collection("sensors")
+        .add({
+          ...payload,
+          createdAt: FieldValue.serverTimestamp(),
+          source: "iot",
+        });
+      firestoreOk = true;
+      console.log(`[POST /api/sensor] ✅ Firestore history written: users/${uid}/ponds/${pondId}/sensors`);
+    } catch (fsErr: any) {
+      console.error(`[POST /api/sensor] ❌ Firestore history failed:`, fsErr.message);
+      throw new Error(`Firestore write failed: ${fsErr.message}`);
+    }
 
-    const latestRef = adminRtdb.ref(`sensors/${uid}/${pondId}/latest`);
-    await latestRef.set(payload);
+    // 3. UPDATE RTDB - latest
+    try {
+      const latestRef = adminRtdb.ref(`sensors/${uid}/${pondId}/latest`);
+      await latestRef.set(payload);
+      latestOk = true;
+      console.log(`[POST /api/sensor] ✅ RTDB latest updated: sensors/${uid}/${pondId}/latest`);
+    } catch (latestErr: any) {
+      console.error(`[POST /api/sensor] ❌ RTDB latest update failed:`, latestErr.message);
+      // Don't throw - latest is optional
+    }
 
+    // 4. HANDLE NOTIFICATIONS (if conditions met)
     if (actions.length > 0) {
-      console.log(`Peringatan Kolam ${pondId}:`, actions);
+      console.log(`[POST /api/sensor] 🔔 Actions triggered for ${pondId}:`, actions);
+      await handleNotifications(uid, pondId, actions).catch((notifErr) => {
+        console.error(`[POST /api/sensor] ⚠️  Notification failed (non-blocking):`, notifErr.message);
+      });
+    }
+
+    console.log(`[POST /api/sensor] ✅ Data processing complete`);
+    return Response.json({ 
+      status: "success", 
+      message: "Data received", 
+      actions, 
+      rtdbOk, 
+      firestoreOk,
+      latestOk,
+    });
+  } catch (error: any) {
+    console.error(`[POST /api/sensor] ❌ Fatal error:`, error.message, error.stack);
+    return Response.json({ 
+      status: "error", 
+      error: error.message,
+      details: "Check server logs for more info"
+    }, { status: 500 });
+  }
+}
+
+/**
+ * Handles sending notifications (Telegram, Web Push) when actions are triggered
+ */
+async function handleNotifications(uid: string, pondId: string, actions: string[]) {
+  try {
+    // Get settings
+    const settingsRef = adminDb.collection("users").doc(uid).collection("settings").doc("config");
+    const settingsSnap = await settingsRef.get();
+
+    // Get pond name
+    let pondName = `Kolam ${pondId}`;
+    const pondRef = adminDb.collection("users").doc(uid).collection("ponds").doc(pondId);
+    const pondSnap = await pondRef.get();
+    const pondData = pondSnap.data();
+    if (pondSnap.exists && pondData?.name) {
+      pondName = pondData.name;
+    }
+
+    const config = settingsSnap.data() || {};
+
+    // Telegram Notification
+    if (config.telegramEnabled && config.botToken && config.chatId) {
       try {
-        const settingsRef = adminDb.collection("users").doc(uid).collection("settings").doc("config");
-        const settingsSnap = await settingsRef.get();
+        const message = `🚨 *PERINGATAN AQUAVION*\nTarget: *${pondName}*\n\nKondisi terdeteksi:\n` + 
+          actions.map((a: string) => `• ${a}`).join("\n");
+        
+        // OBFUSCATED URL TO PREVENT WINDOWS DEFENDER FALSE POSITIVE
+        const tgBase = "https://api" + ".telegram" + ".org/bot";
+        const tgUrl = `${tgBase}${config.botToken}/sendMessage`;
+        
+        const tgResponse = await fetch(tgUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: config.chatId,
+            text: message,
+            parse_mode: "Markdown"
+          })
+        });
 
-        let pondName = `Kolam ${pondId}`;
-        const pondRef = adminDb.collection("users").doc(uid).collection("ponds").doc(pondId);
-        const pondSnap = await pondRef.get();
-        const pondData = pondSnap.data();
-        if (pondSnap.exists && pondData?.name) {
-          pondName = pondData.name;
+        if (!tgResponse.ok) {
+          throw new Error(`Telegram API returned ${tgResponse.status}`);
         }
-
-        const config = settingsSnap.data() || {};
-        if (settingsSnap.exists) {
-          if (config.telegramEnabled && config.botToken && config.chatId) {
-            const message = `🚨 *PERINGATAN AQUAVION*\nTarget: *${pondName}*\n\nKondisi terdeteksi:\n` + actions.map((a: string) => `• ${a}`).join("\n");
-            
-            // OBFUSCATED URL TO PREVENT WINDOWS DEFENDER FALSE POSITIVE
-            const tgBase = "https://api" + ".telegram" + ".org/bot";
-            await fetch(`${tgBase}${config.botToken}/sendMessage`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                chat_id: config.chatId,
-                text: message,
-                parse_mode: "Markdown"
-              })
-            }).catch(e => console.error("Telegram fetch error:", e));
-            console.log("Notifikasi Telegram berhasil dipanggil.");
-          }
-
-          if (config.webPushEnabled) {
-             const subRef = adminDb.collection("users").doc(uid).collection("settings").doc("push_subs");
-             const subSnap = await subRef.get();
-             const subData = subSnap.data();
-             if (subSnap.exists && subData?.subscription) {
-                try {
-                  const webpush = require("web-push");
-                  webpush.setVapidDetails(
-                    "mailto:admin@aquavion.com",
-                    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string,
-                    process.env.VAPID_PRIVATE_KEY as string
-                  );
-                  await webpush.sendNotification(
-                    subData.subscription,
-                    JSON.stringify({
-                      title: `AQUAVION BAHAYA: ${pondName}`,
-                      body: actions.map((a: string) => `• ${a}`).join("\n"),
-                      icon: "/icon.svg"
-                    })
-                  );
-                  console.log("Web Push Browser berhasil dipanggil.");
-                } catch (wpErr: any) {
-                  console.error("Gagal menembak Web Push API:", wpErr.message);
-                }
-             }
-          }
-        }
-      } catch (err) {
-        console.error("Gagal mengirim notifikasi:", err);
+        console.log("✅ Notifikasi Telegram berhasil dikirim.");
+      } catch (tgErr: any) {
+        console.error("❌ Telegram notification error:", tgErr.message);
       }
     }
 
-    return Response.json({ status: "success", message: "Data received", actions, rtdbOk, firestoreOk });
-  } catch (error: any) {
-    return Response.json({ status: "error", error: error.message }, { status: 500 });
+    // Web Push Notification
+    if (config.webPushEnabled) {
+      try {
+        const subRef = adminDb.collection("users").doc(uid).collection("settings").doc("push_subs");
+        const subSnap = await subRef.get();
+        const subData = subSnap.data();
+        
+        if (subSnap.exists && subData?.subscription) {
+          const webpush = require("web-push");
+          webpush.setVapidDetails(
+            "mailto:admin@aquavion.com",
+            process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY as string,
+            process.env.VAPID_PRIVATE_KEY as string
+          );
+          
+          await webpush.sendNotification(
+            subData.subscription,
+            JSON.stringify({
+              title: `AQUAVION BAHAYA: ${pondName}`,
+              body: actions.map((a: string) => `• ${a}`).join("\n"),
+              icon: "/icon.svg"
+            })
+          );
+          console.log("✅ Web Push Browser notification sent.");
+        }
+      } catch (wpErr: any) {
+        console.error("❌ Web Push notification error:", wpErr.message);
+      }
+    }
+  } catch (err: any) {
+    console.error("❌ Notification handler error:", err.message);
+    throw err;
   }
 }

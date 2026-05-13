@@ -44,6 +44,10 @@ const databaseUrl = databaseUrlEnv && databaseUrlEnv.trim()
 
 const parsedKey = serviceAccountJson ? parseServiceAccount(serviceAccountJson) : null;
 
+if (!parsedKey) {
+  console.warn("⚠️  Firebase Service Account Key not found or failed to parse. Server-side operations will not work.");
+}
+
 const app = getApps().length
   ? getApps()[0]
   : initializeApp(
@@ -58,5 +62,8 @@ const app = getApps().length
 const adminAuth = getAuth(app);
 const adminDb = getFirestore(app);
 const adminRtdb = getDatabase(app);
+
+// Set Firestore settings for better error handling
+adminDb.settings({ ignoreUndefinedProperties: true });
 
 export { adminAuth, adminDb, adminRtdb };

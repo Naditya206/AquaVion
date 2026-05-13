@@ -13,21 +13,33 @@ export async function GET(req: Request) {
     let endDate = searchParams.get("endDate");
 
     if (!uid || !pondId) {
+      console.warn("[GET /api/history] Missing uid or pondId");
       return Response.json({ error: "uid dan pondId wajib diberikan" }, { status: 400 });
     }
 
+    console.log(`[GET /api/history] Fetching history for uid=${uid}, pondId=${pondId}, period=${period}`);
+
+    // Auth verification
     const authHeader = req.headers.get("authorization") ?? "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
 
     if (!token) {
+      console.warn("[GET /api/history] Missing authorization token");
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = await adminAuth.verifyIdToken(token);
-    if (decoded.uid !== uid) {
-      return Response.json({ error: "Forbidden" }, { status: 403 });
+    try {
+      const decoded = await adminAuth.verifyIdToken(token);
+      if (decoded.uid !== uid) {
+        console.warn(`[GET /api/history] Token uid mismatch: ${decoded.uid} vs ${uid}`);
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } catch (authErr: any) {
+      console.error("[GET /api/history] Token verification failed:", authErr.message);
+      return Response.json({ error: "Invalid token" }, { status: 401 });
     }
 
+    // Calculate date range
     const now = new Date();
     let startLimit: Date;
     let endLimit: Date = now;
@@ -50,6 +62,9 @@ export async function GET(req: Request) {
       startLimit.setHours(0, 0, 0, 0); // fallback today
     }
 
+    console.log(`[GET /api/history] Date range: ${startLimit.toISOString()} to ${endLimit.toISOString()}`);
+
+    // Query Firestore
     const sensorsRef = adminDb
       .collection("users")
       .doc(uid)
@@ -57,19 +72,15 @@ export async function GET(req: Request) {
       .doc(pondId)
       .collection("sensors");
     
-    // Note: Due to Firestore composite index limits, if we haven't created an index, 
-    // we might need to filter the date manually if orderBy createdAt and where createdAt > startLimit fails.
-    // Assuming standard query or we can fetch last 1000 and filter in memory.
-    // For safety without building composite index immediately, fetch all from a limit or just no-filter and memory filter.
-    // Let's use simple where query assuming default indexing works for single inequalities.
-
     const q = sensorsRef
       .where("createdAt", ">=", Timestamp.fromDate(startLimit))
       .where("createdAt", "<=", Timestamp.fromDate(endLimit))
       .orderBy("createdAt", "desc");
 
     const snapshot = await q.get();
+    console.log(`[GET /api/history] Found ${snapshot.size} documents`);
 
+    // Format response data
     const data = snapshot.docs.map(doc => {
       const docData = doc.data();
       const rawDate = docData.createdAt || docData.created_at;
@@ -91,13 +102,59 @@ export async function GET(req: Request) {
       };
     });
 
-    // Generate Status and calculate summary
+    // Calculate summary and status
     let sumSuhu = 0, sumPh = 0;
     let minSuhu = Infinity, maxSuhu = -Infinity;
     let minPh = Infinity, maxPh = -Infinity;
 
     const formattedData = data.map(item => {
       // Logic for status
+      const isWarning = item.suhu < 25 || item.suhu > 30 || item.ph_air < 6.5 || item.ph_air > 8.5 || item.kekeruhan > 400 || item.tinggi_air < 40 || item.tinggi_air > 70;
+      const status = isWarning ? "Butuh Tindakan" : "Aman";
+
+      sumSuhu += item.suhu;
+      sumPh += item.ph_air;
+      if (item.suhu < minSuhu) minSuhu = item.suhu;
+      if (item.suhu > maxSuhu) maxSuhu = item.suhu;
+      if (item.ph_air < minPh) minPh = item.ph_air;
+      if (item.ph_air > maxPh) maxPh = item.ph_air;
+
+      return {
+        ...item,
+        status
+      }
+    });
+
+    const summary = {
+      avgSuhu: data.length ? parseFloat((sumSuhu / data.length).toFixed(1)) : 0,
+      avgPh: data.length ? parseFloat((sumPh / data.length).toFixed(1)) : 0,
+      minSuhu: minSuhu !== Infinity ? minSuhu : null,
+      maxSuhu: maxSuhu !== -Infinity ? maxSuhu : null,
+      minPh: minPh !== Infinity ? minPh : null,
+      maxPh: maxPh !== -Infinity ? maxPh : null,
+      totalData: data.length
+    }
+
+    console.log(`[GET /api/history] ✅ Query successful, returning ${data.length} records`);
+    return Response.json({ data: formattedData, summary });
+  } catch (error: any) {
+    console.error("[GET /api/history] ❌ Error:", error.message, error.code);
+    
+    // Check if it's a Firestore composite index error
+    if (error.code === 9 || error.message?.includes("FAILED_PRECONDITION")) {
+      console.error("[GET /api/history] 🔨 Composite index needed. Build it in Firebase Console.");
+      return Response.json({ 
+        error: "Firestore index tidak tersedia. Silakan tunggu atau buat index di Firebase Console.",
+        code: "INDEX_REQUIRED"
+      }, { status: 503 });
+    }
+    
+    return Response.json({ 
+      error: error.message || "Gagal mengambil data history",
+      code: error.code
+    }, { status: 500 });
+  }
+}
       const isWarning = item.suhu < 25 || item.suhu > 30 || item.ph_air < 6.5 || item.ph_air > 8.5 || item.kekeruhan > 400 || item.tinggi_air < 40 || item.tinggi_air > 70;
       const status = isWarning ? "Butuh Tindakan" : "Aman";
 

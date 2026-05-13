@@ -6,6 +6,21 @@ service cloud.firestore {
       allow read, write: if request.auth != null
                           && request.auth.uid == userId;
 
+      match /ponds/{pondId} {
+        allow read, write: if request.auth != null
+                            && request.auth.uid == userId;
+
+        match /sensors/{document=**} {
+          allow read, write: if request.auth != null
+                              && request.auth.uid == userId;
+        }
+      }
+
+      match /settings/{document=**} {
+        allow read, write: if request.auth != null
+                            && request.auth.uid == userId;
+      }
+
       match /{document=**} {
         allow read, write: if request.auth != null
                             && request.auth.uid == userId;
