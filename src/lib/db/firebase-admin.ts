@@ -42,7 +42,15 @@ const databaseUrl = databaseUrlEnv && databaseUrlEnv.trim()
   ? databaseUrlEnv
   : "https://aquavion-26-default-rtdb.asia-southeast1.firebasedatabase.app";
 
-const parsedKey = serviceAccountJson ? parseServiceAccount(serviceAccountJson) : null;
+let parsedKey = serviceAccountJson ? parseServiceAccount(serviceAccountJson) : null;
+
+if (!parsedKey && process.env.GOOGLE_CLOUD_PROJECT_ID && process.env.GOOGLE_CLOUD_CLIENT_EMAIL && process.env.GOOGLE_CLOUD_PRIVATE_KEY) {
+  parsedKey = {
+    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+    clientEmail: process.env.GOOGLE_CLOUD_CLIENT_EMAIL,
+    privateKey: process.env.GOOGLE_CLOUD_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  };
+}
 
 const app = getApps().length
   ? getApps()[0]
