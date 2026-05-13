@@ -223,7 +223,11 @@ export function useDashboardData() {
 
     return [...sensors]
       .filter((item) => item.createdAt)
-      .sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""))
+      .sort((a, b) => {
+        const timeA = new Date(a.createdAt || "").getTime() || 0;
+        const timeB = new Date(b.createdAt || "").getTime() || 0;
+        return timeA - timeB;
+      })
       .map((item) => ({
         time: formatTime(item.createdAt) || "--:--",
         ph: item.ph,

@@ -73,8 +73,10 @@ export async function POST(request: NextRequest) {
     let waterVolume = null
     
     if (sensorDistance != null) {
-      actualWaterLevel = Math.max(0, pondDepth - sensorDistance) // Cegah nilai minus
-      waterVolume = actualWaterLevel * pondSize * 10 // (cm * m2 * 10 = Liter)
+      // Use the sensor reading directly as requested by the user
+      actualWaterLevel = sensorDistance;
+      // Provide a fallback for volume if needed, or compute based on actualWaterLevel
+      waterVolume = (pondDepth > actualWaterLevel ? (pondDepth - actualWaterLevel) : 0) * pondSize * 10;
     }
 
     // Analyze sensor data and generate actions
