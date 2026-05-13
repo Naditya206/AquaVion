@@ -21,6 +21,8 @@ export default function DashboardPage() {
     sensorsError,
     latestSensor,
     chartData,
+    chartPeriod,
+    setChartPeriod,
   } = useDashboardData()
 
   // Update sync config when pond selection changes
@@ -244,9 +246,23 @@ export default function DashboardPage() {
         {/* Charts Panel (2 Columns) */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="h-full">
-            <CardHeader className="pb-2 border-b">
-              <CardTitle>Riwayat Sensor Keseluruhan</CardTitle>
-              <CardDescription>Pergerakan 4 parameter kualitas air secara real-time</CardDescription>
+            <CardHeader className="pb-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Riwayat Sensor Keseluruhan</CardTitle>
+                <CardDescription>Pergerakan 4 parameter kualitas air secara real-time</CardDescription>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Rentang:</span>
+                <select 
+                  className="h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={chartPeriod}
+                  onChange={(e) => setChartPeriod(e.target.value)}
+                >
+                  <option value="1d">Hari Ini</option>
+                  <option value="7d">7 Hari Terakhir</option>
+                  <option value="30d">30 Hari Terakhir</option>
+                </select>
+              </div>
             </CardHeader>
             <CardContent className="pt-6">
               {chartData.length > 0 ? (
@@ -254,12 +270,12 @@ export default function DashboardPage() {
                   {/* Suhu Air */}
                   <div className="h-[220px] w-full border rounded-xl p-3 bg-card/50 shadow-sm flex flex-col">
                     <h4 className="text-xs font-bold mb-3 text-red-500 flex items-center gap-1.5"><Thermometer className="h-3.5 w-3.5"/> Suhu Air (°C)</h4>
-                    <div className="flex-1 min-h-0">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="flex-1 min-h-0 min-w-0 w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
                           <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} minTickGap={20} />
-                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={['auto', 'auto']} />
+                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[20, 40]} />
                           <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                           <Line type="monotone" dataKey="temp" name="Suhu" stroke="#ef4444" strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
                         </LineChart>
@@ -270,8 +286,8 @@ export default function DashboardPage() {
                   {/* pH Air */}
                   <div className="h-[220px] w-full border rounded-xl p-3 bg-card/50 shadow-sm flex flex-col">
                     <h4 className="text-xs font-bold mb-3 text-cyan-500 flex items-center gap-1.5"><Activity className="h-3.5 w-3.5"/> pH Air</h4>
-                    <div className="flex-1 min-h-0">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="flex-1 min-h-0 min-w-0 w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
                           <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} minTickGap={20} />
@@ -286,12 +302,12 @@ export default function DashboardPage() {
                   {/* Kekeruhan */}
                   <div className="h-[220px] w-full border rounded-xl p-3 bg-card/50 shadow-sm flex flex-col">
                     <h4 className="text-xs font-bold mb-3 text-indigo-500 flex items-center gap-1.5"><Wind className="h-3.5 w-3.5"/> Kekeruhan (NTU)</h4>
-                    <div className="flex-1 min-h-0">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="flex-1 min-h-0 min-w-0 w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
                           <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} minTickGap={20} />
-                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[0, 'auto']} />
+                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[0, 200]} />
                           <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                           <Line type="monotone" dataKey="turbidity" name="Kekeruhan" stroke="#6366f1" strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
                         </LineChart>
@@ -302,12 +318,12 @@ export default function DashboardPage() {
                   {/* Tinggi Air */}
                   <div className="h-[220px] w-full border rounded-xl p-3 bg-card/50 shadow-sm flex flex-col">
                     <h4 className="text-xs font-bold mb-3 text-amber-500 flex items-center gap-1.5"><Droplets className="h-3.5 w-3.5"/> Tinggi Air (cm)</h4>
-                    <div className="flex-1 min-h-0">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="flex-1 min-h-0 min-w-0 w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
                           <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} minTickGap={20} />
-                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[0, 'auto']} />
+                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[0, 120]} />
                           <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                           <Line type="monotone" dataKey="waterLevel" name="Tinggi Air" stroke="#f59e0b" strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
                         </LineChart>

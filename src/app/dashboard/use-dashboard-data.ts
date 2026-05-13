@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { collection, onSnapshot } from "firebase/firestore"
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore"
 import { db } from "@/lib/db/firebase"
 import { useAuth } from "@/components/auth/auth-provider"
 
@@ -95,6 +95,7 @@ export function useDashboardData() {
     return pondIdFromUrl || pondIdFromStorage
   })
   const [sensorsState, setSensorsState] = useState<SensorsState | null>(null)
+  const [chartPeriod, setChartPeriod] = useState("1d") // "1d", "7d", "30d"
 
   useEffect(() => {
     if (!loading && !user) {
@@ -165,9 +166,16 @@ export function useDashboardData() {
 
     const ownerId = user.uid
     const pondId = activePondId
+
+    let limitCount = 24
+    if (chartPeriod === "7d") limitCount = 168
+    if (chartPeriod === "30d") limitCount = 720
+
     const sensorsRef = collection(db, "users", user.uid, "ponds", pondId, "sensors")
+    const q = query(sensorsRef, orderBy("createdAt", "desc"), limit(limitCount))
+
     const unsubscribe = onSnapshot(
-      sensorsRef,
+      q,
       (snapshot) => {
         const items = snapshot.docs
           .map((docSnap) => {
@@ -186,7 +194,6 @@ export function useDashboardData() {
             }
           })
           .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
-          .slice(0, 24)
 
         setSensorsState({ ownerId, pondId, items, error: null })
       },
@@ -197,7 +204,7 @@ export function useDashboardData() {
     )
 
     return () => unsubscribe()
-  }, [activePondId, user])
+  }, [activePondId, user, chartPeriod])
 
   const sensors = useMemo(
     () =>
@@ -258,6 +265,8 @@ export function useDashboardData() {
     sensorsError,
     latestSensor,
     chartData,
+    chartPeriod,
+    setChartPeriod,
   }
 }
 

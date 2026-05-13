@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/db/firebase-admin"
-import { FieldValue } from "firebase-admin/firestore"
 import { BigQuery } from "@google-cloud/bigquery"
 
 // Initialize BigQuery client using environment variables
@@ -126,9 +125,9 @@ export async function POST(request: NextRequest) {
     // Save sensor data to Firestore
     const sensorRef = adminDb.collection("users").doc(ownerId).collection("ponds").doc(pondId).collection("sensors").doc()
     await sensorRef.set({
-      temperature: temperature || null,
-      ph: ph || null,
-      turbidity: turbidity || null,
+      temperature: temperature ?? null,
+      ph: ph ?? null,
+      turbidity: turbidity ?? null,
       waterLevel: actualWaterLevel, // Simpan hasil konversi
       water_level: actualWaterLevel, // Alias for compatibility
       rawDistance: sensorDistance || null, // Simpan jarak asli sensor
@@ -156,9 +155,9 @@ export async function POST(request: NextRequest) {
           user_id: ownerId,
           pond_id: pondId,
           device_id: device_id,
-          temperature: temperature || null,
-          ph: ph || null,
-          turbidity: turbidity || null,
+          temperature: temperature ?? null,
+          ph: ph ?? null,
+          turbidity: turbidity ?? null,
           water_level: actualWaterLevel,
           water_volume: waterVolume,
           actions: actions.join(', ') || null,
