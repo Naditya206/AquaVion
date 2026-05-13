@@ -109,6 +109,27 @@ export default function GuidebookPage() {
           </CardContent>
         </Card>
 
+        <Card className="border-l-4 border-l-sky-500 shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 font-bold text-sm">6</span>
+              Konfigurasi Notifikasi Bot Telegram
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-muted-foreground">
+            <p>
+              Dapatkan peringatan dini langsung ke ponsel Anda melalui Telegram agar Anda bisa bertindak cepat meskipun sedang tidak membuka website.
+            </p>
+            <ul className="list-decimal pl-6 space-y-2">
+              <li>Buka aplikasi Telegram dan cari bot dengan nama <strong>@AquaVionBot</strong> atau klik tautan yang tersedia di menu pengaturan.</li>
+              <li>Klik tombol <strong>/start</strong> pada chat bot tersebut. Bot akan membalas dengan memberikan <strong>Chat ID</strong> unik Anda.</li>
+              <li>Masuk ke Dasbor AquaVion, buka menu <strong>Pengaturan</strong> {">"} <strong>Notifikasi</strong>.</li>
+              <li>Masukkan nomor Chat ID tersebut ke kolom <strong>Telegram Chat ID</strong> dan klik <strong>Simpan Perubahan</strong>.</li>
+              <li>Pastikan fitur "Aktifkan Notifikasi Telegram" dalam posisi ON. Kini Anda akan menerima pesan otomatis setiap kali sensor mendeteksi kondisi air yang kritis.</li>
+            </ul>
+          </CardContent>
+        </Card>
+
       </div>
     </div>
   )

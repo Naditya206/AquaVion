@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/db/firebase"
-import { collection, doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore"
+import { adminDb } from "@/lib/db/firebase-admin"
+import { FieldValue } from "firebase-admin/firestore"
 import { BigQuery } from "@google-cloud/bigquery"
 
 // Initialize BigQuery client using environment variables
@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
     console.log(`Incoming request for User: ${ownerId}, Device: ${device_id}`);
 
     // Find pond with this device_id
-    const pondsRef = collection(db, "users", ownerId, "ponds")
-    const pondsSnapshot = await getDocs(pondsRef)
+    const pondsRef = adminDb.collection("users").doc(ownerId).collection("ponds")
+    const pondsSnapshot = await pondsRef.get()
     
     console.log(`Found ${pondsSnapshot.size} ponds for this user`);
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get pond thresholds and dimensions
-    const pondDoc = await getDoc(doc(db, "users", ownerId, "ponds", pondId))
+    const pondDoc = await adminDb.collection("users").doc(ownerId).collection("ponds").doc(pondId).get()
     const pondData = pondDoc.data()
     const thresholds = pondData?.thresholds || {}
     
@@ -122,8 +122,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Save sensor data to Firestore
-    const sensorRef = doc(collection(db, "users", ownerId, "ponds", pondId, "sensors"))
-    await setDoc(sensorRef, {
+    const sensorRef = adminDb.collection("users").doc(ownerId).collection("ponds").doc(pondId).collection("sensors").doc()
+    await sensorRef.set({
       temperature: temperature || null,
       ph: ph || null,
       turbidity: turbidity || null,
@@ -134,14 +134,14 @@ export async function POST(request: NextRequest) {
       actions,
       device_id,
       ssid: ssid || null,
-      createdAt: serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     })
 
     // Update the pond document with the latest SSID to show on dashboard
     if (ssid) {
-      await setDoc(doc(db, "users", ownerId, "ponds", pondId), {
+      await adminDb.collection("users").doc(ownerId).collection("ponds").doc(pondId).set({
         last_ssid: ssid,
-        updatedAt: serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
       }, { merge: true });
     }
 
@@ -203,6 +203,3 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   }
 }
-
-// Import getDocs
-import { getDocs } from "firebase/firestore"

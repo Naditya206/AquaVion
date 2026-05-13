@@ -2,7 +2,7 @@
 
 import { useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, AlertTriangle, CheckCircle, Droplets, Thermometer, Wind } from "lucide-react"
+import { Activity, AlertTriangle, CheckCircle, Clock, Droplets, Thermometer, Wind } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { useDashboardData } from "./use-dashboard-data"
@@ -52,7 +52,15 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="space-y-2 w-full">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dasbor Pemantauan Kolam</h1>
-          <p className="text-sm md:text-base text-muted-foreground">{headerSubtitle}</p>
+          <div className="flex flex-col md:flex-row md:items-center gap-x-4 gap-y-1">
+            <p className="text-sm md:text-base text-muted-foreground">{headerSubtitle}</p>
+            {activeSensor?.createdAt && (
+              <div className="flex items-center gap-1.5 text-xs font-bold text-primary px-2 py-0.5 bg-primary/10 rounded-full w-fit">
+                <Clock className="h-3 w-3" />
+                Update: {new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date(activeSensor.createdAt)).replace(/\./g, ':')}
+              </div>
+            )}
+          </div>
           <div className="rounded-xl border bg-card p-4 md:p-5 flex flex-col md:flex-row md:items-stretch justify-between gap-6 shadow-sm">
             <div className="flex-1">
               <div className="mb-3 flex items-center justify-between gap-3">
@@ -108,12 +116,14 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-card px-3 py-1.5 md:px-4 md:py-2 border rounded-full shadow-sm">
-          <span className="relative flex h-2 w-2 md:h-3 md:w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-green-500"></span>
-          </span>
-          <span className="text-xs md:text-sm font-medium">Sistem Daring</span>
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex items-center gap-2 bg-card px-3 py-1.5 md:px-4 md:py-2 border rounded-full shadow-sm w-fit">
+            <span className="relative flex h-2 w-2 md:h-3 md:w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-green-500"></span>
+            </span>
+            <span className="text-xs md:text-sm font-medium">Sistem Daring</span>
+          </div>
         </div>
       </div>
 
@@ -128,15 +138,22 @@ export default function DashboardPage() {
             <div className="text-xl md:text-2xl font-bold">
               {activeSensor?.temperature != null ? `${activeSensor.temperature}°C` : "--"}
             </div>
-            <p className="text-[10px] md:text-xs flex items-center mt-1">
-              {activeSensor?.temperature == null ? null : activeSensor.temperature < 25 ? (
-                <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Dingin</span></>
-              ) : activeSensor.temperature > 30 ? (
-                <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Panas</span></>
-              ) : (
-                <><CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">Suhu Optimal</span></>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-[10px] md:text-xs flex items-center">
+                {activeSensor?.temperature == null ? null : activeSensor.temperature < 25 ? (
+                  <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Dingin</span></>
+                ) : activeSensor.temperature > 30 ? (
+                  <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Panas</span></>
+                ) : (
+                  <><CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">Suhu Optimal</span></>
+                )}
+              </p>
+              {activeSensor?.createdAt && (
+                <span className="text-[9px] text-muted-foreground opacity-50 font-medium tabular-nums">
+                  {new Date(activeSensor.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                </span>
               )}
-            </p>
+            </div>
           </CardContent>
         </Card>
         
@@ -149,15 +166,22 @@ export default function DashboardPage() {
             <div className="text-xl md:text-2xl font-bold">
               {activeSensor?.ph != null ? activeSensor.ph : "--"}
             </div>
-            <p className="text-[10px] md:text-xs flex items-center mt-1">
-              {activeSensor?.ph == null ? null : activeSensor.ph < 6.5 ? (
-                <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Asam</span></>
-              ) : activeSensor.ph > 8.5 ? (
-                <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Basa</span></>
-              ) : (
-                <><CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">pH Normal</span></>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-[10px] md:text-xs flex items-center">
+                {activeSensor?.ph == null ? null : activeSensor.ph < 6.5 ? (
+                  <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Asam</span></>
+                ) : activeSensor.ph > 8.5 ? (
+                  <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Basa</span></>
+                ) : (
+                  <><CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">pH Normal</span></>
+                )}
+              </p>
+              {activeSensor?.createdAt && (
+                <span className="text-[9px] text-muted-foreground opacity-50 font-medium tabular-nums">
+                  {new Date(activeSensor.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                </span>
               )}
-            </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -170,13 +194,20 @@ export default function DashboardPage() {
             <div className="text-xl md:text-2xl font-bold">
               {activeSensor?.turbidity != null ? `${activeSensor.turbidity} NTU` : "--"}
             </div>
-            <p className="text-[10px] md:text-xs flex items-center mt-1">
-               {activeSensor?.turbidity == null ? null : activeSensor.turbidity > 400 ? (
-                <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Air Keruh</span></>
-              ) : (
-                <><CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">Air Bersih</span></>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-[10px] md:text-xs flex items-center">
+                {activeSensor?.turbidity == null ? null : activeSensor.turbidity > 400 ? (
+                  <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Air Keruh</span></>
+                ) : (
+                  <><CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">Air Bersih</span></>
+                )}
+              </p>
+              {activeSensor?.createdAt && (
+                <span className="text-[9px] text-muted-foreground opacity-50 font-medium tabular-nums">
+                  {new Date(activeSensor.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                </span>
               )}
-            </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -194,15 +225,22 @@ export default function DashboardPage() {
                 </span>
               )}
             </div>
-            <p className="text-[10px] md:text-xs flex items-center mt-1">
-              {activeSensor?.waterLevel == null ? null : activeSensor.waterLevel < 40 ? (
-                <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Dangkal</span></>
-              ) : activeSensor.waterLevel > 70 ? (
-                <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Dalam</span></>
-              ) : (
-                <><CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">Volume Aman</span></>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-[10px] md:text-xs flex items-center">
+                {activeSensor?.waterLevel == null ? null : activeSensor.waterLevel < 40 ? (
+                  <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Dangkal</span></>
+                ) : activeSensor.waterLevel > 70 ? (
+                  <><AlertTriangle className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-500 mr-1" /> <span className="text-red-500 font-medium">Terlalu Dalam</span></>
+                ) : (
+                  <><CheckCircle className="h-2.5 w-2.5 md:h-3 md:w-3 text-green-500 mr-1" /> <span className="text-muted-foreground">Volume Aman</span></>
+                )}
+              </p>
+              {activeSensor?.createdAt && (
+                <span className="text-[9px] text-muted-foreground opacity-50 font-medium tabular-nums">
+                  {new Date(activeSensor.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                </span>
               )}
-            </p>
+            </div>
           </CardContent>
         </Card>
       </div>
