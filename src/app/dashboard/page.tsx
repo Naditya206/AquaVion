@@ -21,6 +21,8 @@ export default function DashboardPage() {
     sensorsError,
     latestSensor,
     chartData,
+    chartPeriod,
+    setChartPeriod,
   } = useDashboardData()
 
   // Update sync config when pond selection changes
@@ -106,12 +108,6 @@ export default function DashboardPage() {
               </div>
               <div className="text-sm font-medium flex items-center gap-2 mb-3">
                 SSID: <span className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 font-mono text-xs">{connectedSSID}</span>
-              </div>
-              <div className="p-2.5 rounded-md bg-amber-500/10 border border-amber-500/20">
-                <div className="text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-start gap-1.5 leading-tight">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                  <span>Pastikan laptop/HP Anda terhubung ke jaringan WiFi yang sama untuk sinkronisasi optimal.</span>
-                </div>
               </div>
             </div>
           </div>
@@ -250,35 +246,90 @@ export default function DashboardPage() {
         {/* Charts Panel (2 Columns) */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="h-full">
-            <CardHeader className="pb-2 border-b">
-              <CardTitle>Riwayat Sensor Keseluruhan</CardTitle>
-              <CardDescription>Pergerakan 4 parameter kualitas air secara real-time</CardDescription>
+            <CardHeader className="pb-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Riwayat Sensor Keseluruhan</CardTitle>
+                <CardDescription>Pergerakan 4 parameter kualitas air secara real-time</CardDescription>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs font-medium text-muted-foreground hidden sm:inline">Rentang:</span>
+                <select 
+                  className="h-8 rounded-md border border-input bg-background px-2.5 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={chartPeriod}
+                  onChange={(e) => setChartPeriod(e.target.value)}
+                >
+                  <option value="1d">Hari Ini</option>
+                  <option value="7d">7 Hari Terakhir</option>
+                  <option value="30d">30 Hari Terakhir</option>
+                </select>
+              </div>
             </CardHeader>
             <CardContent className="pt-6">
               {chartData.length > 0 ? (
-                <div className="h-[450px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} vertical={false} />
-                      <XAxis dataKey="time" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={10} />
-                      
-                      {/* Sumbu Y Kiri untuk pH, Suhu, Tinggi Air */}
-                      <YAxis yAxisId="left" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={10} />
-                      
-                      {/* Sumbu Y Kanan khusus untuk Kekeruhan (karena nilainya bisa 0-1000) */}
-                      <YAxis yAxisId="right" orientation="right" domain={[0, 'auto']} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickMargin={10} />
-                      
-                      <Tooltip contentStyle={{ borderRadius: '8px', backgroundColor: 'rgba(255, 255, 255, 0.9)', color: '#000', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                      <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px', paddingBottom: '20px' }} />
-                      
-                      <Line yAxisId="left" type="monotone" dataKey="temp" name="Suhu (°C)" stroke="#ef4444" strokeWidth={2.5} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
-                      <Line yAxisId="left" type="monotone" dataKey="ph" name="pH" stroke="#06b6d4" strokeWidth={2.5} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
-                      <Line yAxisId="left" type="monotone" dataKey="waterLevel" name="Tinggi Air (cm)" stroke="#f59e0b" strokeWidth={2.5} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
-                      
-                      {/* Kekeruhan pakai sumbu kanan */}
-                      <Line yAxisId="right" type="monotone" dataKey="turbidity" name="Kekeruhan (NTU)" stroke="#6366f1" strokeWidth={2.5} dot={false} activeDot={{ r: 6, strokeWidth: 0 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                  {/* Suhu Air */}
+                  <div className="h-[220px] w-full border rounded-xl p-3 bg-card/50 shadow-sm flex flex-col">
+                    <h4 className="text-xs font-bold mb-3 text-red-500 flex items-center gap-1.5"><Thermometer className="h-3.5 w-3.5"/> Suhu Air (°C)</h4>
+                    <div className="flex-1 min-h-0 min-w-0 w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                          <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} minTickGap={20} />
+                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[20, 40]} />
+                          <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                          <Line type="monotone" dataKey="temp" name="Suhu" stroke="#ef4444" strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                  
+                  {/* pH Air */}
+                  <div className="h-[220px] w-full border rounded-xl p-3 bg-card/50 shadow-sm flex flex-col">
+                    <h4 className="text-xs font-bold mb-3 text-cyan-500 flex items-center gap-1.5"><Activity className="h-3.5 w-3.5"/> pH Air</h4>
+                    <div className="flex-1 min-h-0 min-w-0 w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                          <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} minTickGap={20} />
+                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[0, 14]} />
+                          <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                          <Line type="monotone" dataKey="ph" name="pH" stroke="#06b6d4" strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Kekeruhan */}
+                  <div className="h-[220px] w-full border rounded-xl p-3 bg-card/50 shadow-sm flex flex-col">
+                    <h4 className="text-xs font-bold mb-3 text-indigo-500 flex items-center gap-1.5"><Wind className="h-3.5 w-3.5"/> Kekeruhan (NTU)</h4>
+                    <div className="flex-1 min-h-0 min-w-0 w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                          <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} minTickGap={20} />
+                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[0, 'auto']} />
+                          <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                          <Line type="monotone" dataKey="turbidity" name="Kekeruhan" stroke="#6366f1" strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Tinggi Air */}
+                  <div className="h-[220px] w-full border rounded-xl p-3 bg-card/50 shadow-sm flex flex-col">
+                    <h4 className="text-xs font-bold mb-3 text-amber-500 flex items-center gap-1.5"><Droplets className="h-3.5 w-3.5"/> Tinggi Air (cm)</h4>
+                    <div className="flex-1 min-h-0 min-w-0 w-full h-full">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                          <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} minTickGap={20} />
+                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[0, 120]} />
+                          <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                          <Line type="monotone" dataKey="waterLevel" name="Tinggi Air" stroke="#f59e0b" strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="h-[450px] flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">Belum ada data riwayat sensor</div>
