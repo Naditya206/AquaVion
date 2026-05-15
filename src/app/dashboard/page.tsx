@@ -307,7 +307,7 @@ export default function DashboardPage() {
                         <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
                           <XAxis dataKey="time" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} minTickGap={20} />
-                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[0, 200]} />
+                          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickMargin={5} domain={[0, 'auto']} />
                           <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                           <Line type="monotone" dataKey="turbidity" name="Kekeruhan" stroke="#6366f1" strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
                         </LineChart>
