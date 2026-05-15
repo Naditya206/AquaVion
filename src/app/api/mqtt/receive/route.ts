@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/db/firebase-admin"
 import { BigQuery } from "@google-cloud/bigquery"
+import { FieldValue } from "firebase-admin/firestore"
 
 // Initialize BigQuery client using environment variables
 const bqClient = process.env.GOOGLE_CLOUD_PROJECT_ID && process.env.GOOGLE_CLOUD_CLIENT_EMAIL && process.env.GOOGLE_CLOUD_PRIVATE_KEY
