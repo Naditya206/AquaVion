@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/db/firebase-admin"
-import { BigQuery } from "@google-cloud/bigquery"
 import { FieldValue } from "firebase-admin/firestore"
 
-// Initialize BigQuery client using environment variables
-const bqClient = process.env.GOOGLE_CLOUD_PROJECT_ID && process.env.GOOGLE_CLOUD_CLIENT_EMAIL && process.env.GOOGLE_CLOUD_PRIVATE_KEY
-  ? new BigQuery({
-      projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-      credentials: {
-        client_email: process.env.GOOGLE_CLOUD_CLIENT_EMAIL,
-        // Replace escaped newlines with actual newlines
-        private_key: process.env.GOOGLE_CLOUD_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      },
-    })
-  : null;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -145,32 +133,6 @@ export async function POST(request: NextRequest) {
         last_ssid: ssid,
         updatedAt: FieldValue.serverTimestamp()
       }, { merge: true });
-    }
-
-    // [RENCANA B] Sync data to BigQuery if configured
-    if (bqClient) {
-      try {
-        const datasetId = 'aquavion_data';
-        const tableId = 'sensor_logs';
-        const row = {
-          user_id: ownerId,
-          pond_id: pondId,
-          device_id: device_id,
-          temperature: temperature ?? null,
-          ph: ph ?? null,
-          turbidity: turbidity ?? null,
-          water_level: actualWaterLevel,
-          water_volume: waterVolume,
-          actions: actions.join(', ') || null,
-          created_at: BigQuery.timestamp(new Date())
-        };
-        
-        await bqClient.dataset(datasetId).table(tableId).insert([row]);
-        console.log(`Berhasil sinkronisasi data dari ${device_id} ke BigQuery!`);
-      } catch (bqError: any) {
-        console.error("Gagal sinkronisasi ke BigQuery:", bqError?.response?.insertErrors || bqError);
-        // Kita tidak nge-throw error di sini agar Firestore tetap aman
-      }
     }
 
     // If there are critical actions, trigger notification

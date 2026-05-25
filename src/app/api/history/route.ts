@@ -70,7 +70,7 @@ export async function GET(req: Request) {
 
     const snapshot = await q.get();
 
-    const data = snapshot.docs.map(doc => {
+    const data = snapshot.docs.map((doc: any) => {
       const docData = doc.data();
       const rawDate = docData.createdAt || docData.created_at;
       let timestamp = "";
@@ -96,7 +96,7 @@ export async function GET(req: Request) {
     let minSuhu = Infinity, maxSuhu = -Infinity;
     let minPh = Infinity, maxPh = -Infinity;
 
-    const formattedData = data.map(item => {
+    const formattedData = data.map((item: any) => {
       // Logic for status
       const isWarning = item.suhu < 25 || item.suhu > 30 || item.ph_air < 6.5 || item.ph_air > 8.5 || item.kekeruhan > 400 || item.tinggi_air < 40 || item.tinggi_air > 70;
       const status = isWarning ? "Butuh Tindakan" : "Aman";

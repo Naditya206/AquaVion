@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
     let sensors: any[] = [];
     if (snapshot.exists()) {
-      snapshot.forEach((childSnap) => {
+      snapshot.forEach((childSnap: any) => {
         const data = childSnap.val();
         sensors.push({
           id: childSnap.key,

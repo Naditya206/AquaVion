@@ -150,20 +150,38 @@ export default function HistoryPage() {
 
   const exportCSV = () => {
     if (!data.length) return;
-    const headers = ["Waktu", "Suhu (°C)", "pH", "Kekeruhan (NTU)", "Tinggi Air (cm)", "Status"];
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\n"
-      + data.map(row => {
-          return `${new Date(row.timestamp).toLocaleString("id-ID")},${row.suhu},${row.ph_air},${row.kekeruhan},${row.tinggi_air},${row.status}`
-      }).join("\n");
-      
-    const encodedUri = encodeURI(csvContent);
+    
+    // Header standar untuk Big Data (mudah dibaca oleh Databricks/Hadoop)
+    const headers = ["timestamp", "temperature", "ph", "turbidity", "waterLevel", "status"];
+    
+    const csvRows = [
+      headers.join(","),
+      ...data.map(row => {
+        // Menggunakan ISO String langsung agar format waktu bersih dan tidak merusak kolom
+        const timestamp = row.timestamp || new Date().toISOString();
+        const suhu = row.suhu ?? 0;
+        const ph = row.ph_air ?? 0;
+        const kekeruhan = row.kekeruhan ?? 0;
+        const tinggiAir = row.tinggi_air ?? 0;
+        const status = row.status ?? "Aman";
+        
+        return `${timestamp},${suhu},${ph},${kekeruhan},${tinggiAir},${status}`;
+      })
+    ];
+    
+    const csvContent = csvRows.join("\n");
+    
+    // Menggunakan Blob untuk mendownload data dalam kapasitas besar tanpa limitasi URL
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Data_Kolam_${selectedPondId}_${new Date().getTime()}.csv`);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `data_sensor_kolam_${selectedPondId}_${new Date().getTime()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Memuat...</div>
