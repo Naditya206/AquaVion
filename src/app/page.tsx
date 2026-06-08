@@ -56,14 +56,14 @@ export default function Home() {
       </section>
 
       {/* Mockup Section */}
-      <section className="w-full max-w-5xl mx-auto px-4 py-20">
+      <section className="w-full max-w-5xl mx-auto px-4 py-10 md:py-20">
         <div className="rounded-2xl border bg-card/50 p-2 md:p-4 backdrop-blur-sm">
-          <div className="rounded-xl overflow-hidden border bg-background shadow-2xl relative aspect-video flex items-center justify-center bg-gradient-to-br from-background to-secondary/20">
+          <div className="rounded-xl overflow-hidden border bg-background shadow-2xl relative min-h-[400px] md:aspect-video flex items-center justify-center bg-gradient-to-br from-background to-secondary/20">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-            <div className="text-center z-10 p-6">
-              <h3 className="text-2xl font-bold mb-4">Dasbor Sentralisasi Peternak</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">Kelola banyak kolam sekaligus dalam satu aplikasi. Sesuaikan ambang batas masing-masing kolam dan pastikan semuanya tetap optimal.</p>
-              <Link href="/dashboard" className={cn(buttonVariants({ variant: "secondary" }))}>
+            <div className="text-center z-10 p-4 sm:p-6 md:p-8">
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 md:mb-4">Dasbor Sentralisasi Peternak</h3>
+              <p className="text-sm sm:text-base text-muted-foreground mb-4 md:mb-6 max-w-md mx-auto">Kelola banyak kolam sekaligus dalam satu aplikasi. Sesuaikan ambang batas masing-masing kolam dan pastikan semuanya tetap optimal.</p>
+              <Link href="/dashboard" className={cn(buttonVariants({ variant: "secondary", size: "default" }), "w-full sm:w-auto")}>
                 Masuk ke Dasbor
               </Link>
             </div>
