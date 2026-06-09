@@ -38,49 +38,7 @@ AquaVion dikembangkan dengan pendekatan end-to-end yang tangguh:
 
 Sistem ini didesain menggunakan arsitektur hybrid yang memadukan komputasi tepi (*edge computing*), database real-time untuk visualisasi instan, dan database dokumen untuk analitik jangka panjang.
 
-```mermaid
-graph TD
-    %% Node Perangkat IoT
-    subgraph IoT ["Perangkat IoT (Edge)"]
-        Sensors["Sensor: Suhu, pH, Turbidity, HC-SR04"]
-        ESP32["ESP32 Microcontroller"]
-        Buzzer["Buzzer Alarm (Lokal)"]
-        Sensors -->|Analog/Digital| ESP32
-        ESP32 -->|Batas Melampaui| Buzzer
-    end
-
-    %% Node Web & API
-    subgraph NextJS ["Aplikasi Next.js (Cloud)"]
-        API_Receive["API: /api/mqtt/receive"]
-        Dashboard["Dashboard & Analytics UI"]
-        API_Notif["API Notifikasi Telegram"]
-        API_Receive -->|Evaluasi Threshold| API_Notif
-    end
-
-    %% Node Databases
-    subgraph Firebase ["Database Cloud (Firebase)"]
-        RTDB["Realtime Database (Live Stream)"]
-        FCloud["Cloud Functions (Sync)"]
-        Firestore["Cloud Firestore (Histori & CRUD)"]
-        RTDB -->|Event Trigger| FCloud
-        FCloud -->|Sync Data| Firestore
-    end
-
-    %% Node Big Data & Komunikasi
-    subgraph BigData ["Analisis Big Data & Notifikasi"]
-        Databricks["Databricks / Hadoop Pipeline"]
-        Telegram["Telegram Client (Peternak)"]
-    end
-
-    %% Hubungan Aliran Data
-    ESP32 -->|HTTPS POST / JSON Telemetry| API_Receive
-    API_Receive -->|Write Live Data| RTDB
-    Dashboard -->|Read Live Data| RTDB
-    Dashboard -->|Read History & CRUD| Firestore
-    API_Notif -->|Send Alert Message| Telegram
-    Firestore -.->|Public Read Rules| Databricks
-    Dashboard -.->|Ekspor CSV Terstandar| Databricks
-```
+![Arsitektur AquaVion](flowchart.png)
 
 ### Penjelasan Aliran Data:
 1. **IoT ke Next.js (Ingestion)**: ESP32 membaca data fisik kolam, mengevaluasi peringatan lokal (Buzzer), kemudian mengirimkan data JSON berformat HTTPS POST ke API Next.js `/api/mqtt/receive`.
