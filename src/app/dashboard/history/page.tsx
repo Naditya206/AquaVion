@@ -16,6 +16,7 @@ export default function HistoryPage() {
   const [period, setPeriod] = useState("7d")
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
+  const [sortOrder, setSortOrder] = useState("desc") // "desc" or "asc"
   
   const [data, setData] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -124,7 +125,13 @@ export default function HistoryPage() {
         return { ...item, status }
       });
 
-      setData(formattedData.reverse());
+      const sortedData = formattedData.sort((a, b) => {
+        return sortOrder === "desc" 
+          ? b.dateObj.getTime() - a.dateObj.getTime()
+          : a.dateObj.getTime() - b.dateObj.getTime();
+      });
+
+      setData(sortedData);
       setCurrentPage(1);
 
     } catch (err: any) {
@@ -139,9 +146,7 @@ export default function HistoryPage() {
     if (user && selectedPondId) {
       fetchData();
     }
-  }, [selectedPondId, period, user])
-
-
+  }, [selectedPondId, period, user, sortOrder]) // Re-run when sort order changes
 
   const exportCSV = () => {
     if (!data.length) return;
@@ -199,6 +204,17 @@ export default function HistoryPage() {
                  <option value="7d">7 Hari Terakhir</option>
                  <option value="30d">30 Hari Terakhir</option>
                  <option value="custom">Kustom</option>
+              </select>
+            </div>
+            <div className="space-y-2 w-full md:w-1/4">
+              <label className="text-sm font-medium text-muted-foreground">Urutkan Waktu</label>
+              <select
+                 className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                 value={sortOrder}
+                 onChange={(e) => setSortOrder(e.target.value)}
+              >
+                 <option value="desc">Terbaru ke Terlama</option>
+                 <option value="asc">Terlama ke Terbaru</option>
               </select>
             </div>
             

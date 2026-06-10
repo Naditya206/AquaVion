@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/db/firebase-admin"
-import { FieldValue } from "firebase-admin/firestore"
 import { BigQuery } from "@google-cloud/bigquery"
+import { FieldValue } from "firebase-admin/firestore"
 
 // Initialize BigQuery client using environment variables
 const bqClient = process.env.GOOGLE_CLOUD_PROJECT_ID && process.env.GOOGLE_CLOUD_CLIENT_EMAIL && process.env.GOOGLE_CLOUD_PRIVATE_KEY
@@ -73,8 +73,10 @@ export async function POST(request: NextRequest) {
     let waterVolume = null
     
     if (sensorDistance != null) {
-      actualWaterLevel = Math.max(0, pondDepth - sensorDistance) // Cegah nilai minus
-      waterVolume = actualWaterLevel * pondSize * 10 // (cm * m2 * 10 = Liter)
+      // Use the sensor reading directly as requested by the user
+      actualWaterLevel = sensorDistance;
+      // Provide a fallback for volume if needed, or compute based on actualWaterLevel
+      waterVolume = (pondDepth > actualWaterLevel ? (pondDepth - actualWaterLevel) : 0) * pondSize * 10;
     }
 
     // Analyze sensor data and generate actions
@@ -124,9 +126,9 @@ export async function POST(request: NextRequest) {
     // Save sensor data to Firestore
     const sensorRef = adminDb.collection("users").doc(ownerId).collection("ponds").doc(pondId).collection("sensors").doc()
     await sensorRef.set({
-      temperature: temperature || null,
-      ph: ph || null,
-      turbidity: turbidity || null,
+      temperature: temperature ?? null,
+      ph: ph ?? null,
+      turbidity: turbidity ?? null,
       waterLevel: actualWaterLevel, // Simpan hasil konversi
       water_level: actualWaterLevel, // Alias for compatibility
       rawDistance: sensorDistance || null, // Simpan jarak asli sensor
@@ -154,9 +156,9 @@ export async function POST(request: NextRequest) {
           user_id: ownerId,
           pond_id: pondId,
           device_id: device_id,
-          temperature: temperature || null,
-          ph: ph || null,
-          turbidity: turbidity || null,
+          temperature: temperature ?? null,
+          ph: ph ?? null,
+          turbidity: turbidity ?? null,
           water_level: actualWaterLevel,
           water_volume: waterVolume,
           actions: actions.join(', ') || null,
