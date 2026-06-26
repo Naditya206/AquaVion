@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/db/firebase-admin"
 import { FieldValue } from "firebase-admin/firestore"
+import { appendToHDFS } from "@/lib/bigdata/hdfs"
 
 export async function POST(request: NextRequest) {
   try {
@@ -126,6 +127,26 @@ export async function POST(request: NextRequest) {
       ssid: ssid || null,
       createdAt: FieldValue.serverTimestamp(),
     })
+
+    // Real-time synchronization to Hadoop HDFS if enabled
+    if (process.env.ENABLE_HADOOP === "true") {
+      const hdfsPath = `/aquavion/ponds/${pondId}/telemetry.jsonl`
+      const telemetryLine = JSON.stringify({
+        timestamp: new Date().toISOString(),
+        temperature: temperature ?? null,
+        ph: ph ?? null,
+        turbidity: turbidity ?? null,
+        waterLevel: actualWaterLevel,
+        waterVolume: waterVolume,
+        actions,
+        device_id,
+      }) + "\n"
+      
+      // Run in background (non-blocking)
+      appendToHDFS(hdfsPath, telemetryLine).catch(err => 
+        console.error("Failed to append telemetry to HDFS:", err)
+      )
+    }
 
     // Update the pond document with the latest SSID to show on dashboard
     if (ssid) {

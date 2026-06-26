@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/components/auth/auth-provider"
-import { Calendar, Download, Filter, Table as TableIcon, Activity } from "lucide-react"
+import { Calendar, Download, Filter, Table as TableIcon, Activity, Database } from "lucide-react"
 import { db } from "@/lib/db/firebase"
 import { collection, query, orderBy, getDocs, limit } from "firebase/firestore"
 
@@ -21,6 +21,8 @@ export default function HistoryPage() {
   const [data, setData] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<{ type: "success" | "error"; message: string } | null>(null)
   
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -184,6 +186,47 @@ export default function HistoryPage() {
     URL.revokeObjectURL(url);
   }
 
+  const syncToHDFS = async () => {
+    if (!user || !selectedPondId) return;
+    setIsSyncing(true);
+    setSyncStatus(null);
+
+    try {
+      const res = await fetch("/api/bigdata/hdfs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.uid,
+          pondId: selectedPondId,
+        }),
+      });
+
+      const result = await res.json();
+      
+      if (res.ok && result.success) {
+        setSyncStatus({
+          type: "success",
+          message: `Sukses menyinkronkan ${result.count} data historik ke HDFS: ${result.hdfsPath}`,
+        });
+      } else {
+        setSyncStatus({
+          type: "error",
+          message: result.error || "Gagal melakukan sinkronisasi ke HDFS.",
+        });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setSyncStatus({
+        type: "error",
+        message: "Gagal menghubungkan ke server API.",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
   if (loading) return <div className="p-8 text-center text-muted-foreground">Memuat...</div>
   if (!user) return <div className="p-8 text-center text-muted-foreground">Anda harus masuk.</div>
 
@@ -253,6 +296,9 @@ export default function HistoryPage() {
             <Button onClick={exportCSV} variant="outline" className="w-full md:w-auto mt-auto md:ml-auto" disabled={!data.length}>
               <Download className="h-4 w-4 mr-2" /> Export CSV
             </Button>
+            <Button onClick={syncToHDFS} variant="outline" className="w-full md:w-auto mt-auto md:ml-2 border-amber-500/50 hover:bg-amber-500/10 text-amber-600 dark:text-amber-400" disabled={isSyncing || !data.length}>
+              <Database className="h-4 w-4 mr-2" /> {isSyncing ? "Syncing..." : "Sync to HDFS"}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -268,7 +314,23 @@ export default function HistoryPage() {
         </div>
       ) : (
         <>
-
+          {syncStatus && (
+            <div className={`p-4 rounded-md border text-sm ${
+              syncStatus.type === "success" 
+                ? "border-green-500/40 bg-green-500/10 text-green-700 dark:text-green-400" 
+                : "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-400"
+            }`}>
+              <div className="flex justify-between items-center">
+                <span>{syncStatus.message}</span>
+                <button 
+                  onClick={() => setSyncStatus(null)} 
+                  className="ml-4 font-bold text-xs uppercase hover:underline opacity-80"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Table Data */}
           <Card>
